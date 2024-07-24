@@ -9,5 +9,12 @@ https://github.com/spf13/hyde.git
 git submodule add https://github.com/spf13/hyde.git themes/hyde
 
 
+hugo server -Dd public/blog
 
-command = "hugo -d public/brainstorm"
+
+https://gohugo.io/getting-started/configuration/#configure-minify
+https://gohugo.io/templates/pagination/#configuration
+https://gohugo.io/about/security/#security-policy
+https://gohugo.io/hugo-pipes/postprocess/#css-purging-with-postcss
+
+

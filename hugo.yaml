@@ -1,10 +1,24 @@
 baseURL: https://codereaper.com/blog
 languageCode: en-us
-title: My New Hugo Site
+timeZone: Europe/Copenhagen
+title: CodeReaper
+
+permalinks:
+  page:
+    posts: /:year/:slug/
 
 theme: hyde
 params:
   layoutReverse: true
+  description: Ramblings from a human debugger living on the west coast of Denmark
+
+disableKinds:
+- taxonomy
+- term
+
+enableGitInfo: true
+enableRobotsTXT: true
+removePathAccents: true
 
 services:
   googleAnalytics:
@@ -24,3 +38,6 @@ privacy:
     disable: true
   youtube:
     disable: true
+
+minify:
+  minifyOutput: false
