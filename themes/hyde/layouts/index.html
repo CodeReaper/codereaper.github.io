@@ -1,6 +1,6 @@
 {{ define "main" -}}
 <div class="posts">
-{{ range .Site.RegularPages -}}
+{{ range $index, $page := (.Paginate (where (where site.RegularPages "Type" "posts") ".Params.hidden" "ne" "true" )).Pages }}
 <article class="post">
   <h1 class="post-title">
     <a href="{{ .RelPermalink }}">{{ .Title }}</a>
@@ -14,5 +14,6 @@
   {{ end }}
 </article>
 {{- end }}
+{{ template "_internal/pagination.html" . }}
 </div>
 {{- end }}

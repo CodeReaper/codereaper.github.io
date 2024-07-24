@@ -16,6 +16,11 @@ menus:
     pageRef: /about
     weight: 20
 
+pagination:
+  disableAliases: false
+  pagerSize: 5
+  path: blog/page
+
 theme: hyde
 params:
   layoutReverse: true

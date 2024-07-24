@@ -3,6 +3,7 @@ https://gohugo.io/getting-started/directory-structure/
 
 https://github.com/spf13/hyde
 https://github.com/peaceiris/actions-hugo
+https://docs.github.com/en/pages/setting-up-a-github-pages-site-with-jekyll/about-github-pages-and-jekyll
 
 
 https://github.com/spf13/hyde.git
@@ -18,3 +19,8 @@ https://gohugo.io/about/security/#security-policy
 https://gohugo.io/hugo-pipes/postprocess/#css-purging-with-postcss
 
 
+https://gohugo.io/templates/pagination/
+https://github.com/yihui/hugo-xmin/blob/master/layouts/_default/list.html
+https://github.com/gohugoio/hugo/blob/master/tpl/tplimpl/embedded/templates/pagination.html
+
+http://codereaper.com/blog/
