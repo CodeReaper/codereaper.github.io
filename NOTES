@@ -3,3 +3,11 @@ https://gohugo.io/getting-started/directory-structure/
 
 https://github.com/spf13/hyde
 https://github.com/peaceiris/actions-hugo
+
+
+https://github.com/spf13/hyde.git
+git submodule add https://github.com/spf13/hyde.git themes/hyde
+
+
+
+command = "hugo -d public/brainstorm"

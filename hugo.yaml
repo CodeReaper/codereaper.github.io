@@ -1,0 +1,26 @@
+baseURL: https://codereaper.com/blog
+languageCode: en-us
+title: My New Hugo Site
+
+theme: hyde
+params:
+  layoutReverse: true
+
+services:
+  googleAnalytics:
+    id: G-0LY4P7KRHP
+
+privacy:
+  googleAnalytics:
+    disable: false
+    respectDoNotTrack: true
+  disqus:
+    disable: true
+  instagram:
+    disable: true
+  twitter:
+    disable: true
+  vimeo:
+    disable: true
+  youtube:
+    disable: true

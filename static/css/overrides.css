@@ -1,0 +1,5 @@
+@media (min-width: 48em) {
+  .sidebar {
+    width: 24rem;
+  }
+}
