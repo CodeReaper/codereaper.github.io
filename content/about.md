@@ -1,8 +1,9 @@
-+++
-title = 'About'
-date = 2024-07-24T18:39:27+02:00
-draft = false
-+++
+---
+title: About
+date: 2014-02-01T00:00:00+02:00
+draft: false
+type: miscellaneous
+---
 
 This place is an outlet for mind of a developer. Plain and simple. If you would like to know more about me, then read on.
 
