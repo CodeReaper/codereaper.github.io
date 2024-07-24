@@ -14,7 +14,6 @@ url: https://codereaper.github.io
 twitter_username: codereaper
 github_username:  codereaper
 
-
 remote_theme: fongandrew/hydeout
 plugins:
   - jekyll-feed
@@ -23,5 +22,7 @@ plugins:
   - jekyll-include-cache
   - jekyll-remote-theme
 
-paginate: 5
+permalink: /:year/:title/
+paginate: 1
+
 google_analytics: UA-7344468-3
