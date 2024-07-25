@@ -1,0 +1,23 @@
+{{ define "main" -}}
+<div class="post">
+  <h1>{{ .Title }}</h1>
+  <time datetime={{ .Date.Format "2006-01-02T15:04:05Z0700" }} class="post-date">{{ .Date.Format "2006" }}</time>
+  {{ .Content }}
+</div>
+
+{{ $hasNext := and .Page.Next (eq .Page.Next.Type "posts") }}
+{{ $hasPrev := and .Page.Prev (eq .Page.Prev.Type "posts") }}
+
+<p style="text-align:center;border-top: 1px solid #eee;padding-top:2rem;">
+{{ if $hasNext }}
+  <a href="{{ .Page.Next.Permalink }}">« {{ .Page.Next.Title }}</a>
+{{ end }}
+{{ if and $hasNext $hasPrev }}
+&mdash;
+{{ end }}
+{{ if $hasPrev }}
+  <a href="{{ .Page.Prev.Permalink }}">{{ .Page.Prev.Title }} »</a>
+{{ end }}
+</p>
+
+{{- end }}

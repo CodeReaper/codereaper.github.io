@@ -1,0 +1,36 @@
+@media (min-width: 48em) {
+  .sidebar {
+    width: 24rem;
+  }
+  .content {
+    max-width: 44rem;
+    margin-left:26rem;
+  }
+}
+
+@media (min-width: 64em) {
+  .content {
+    max-width: 38rem;
+    margin-left:28rem;
+  }
+}
+
+@media (min-width: 48em) {
+  .layout-reverse .content {
+    margin-right: 26rem;
+  }
+}
+
+@media (min-width: 64em) {
+  .layout-reverse .content {
+    margin-right: 28rem;
+  }
+}
+
+pre {
+  white-space: pre !important;
+}
+
+.highlight {
+  overflow-x: auto;
+}

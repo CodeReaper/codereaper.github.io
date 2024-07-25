@@ -1,0 +1,64 @@
+title: CodeReaper
+baseURL: https://codereaper.com
+timeZone: Europe/Copenhagen
+languageCode: en-us
+
+permalinks:
+  page:
+    posts: blog/:year/:slug/
+
+menus:
+  main:
+  - name: Home
+    pageRef: /
+    weight: 10
+  - name: About
+    pageRef: /about
+    weight: 20
+
+theme: hyde
+params:
+  description: Ramblings from a human debugger living on the west coast of Denmark
+
+markup:
+  highlight:
+    anchorLineNos: false
+    codeFences: true
+    guessSyntax: false
+    lineAnchors: ""
+    lineNoStart: 1
+    lineNos: false
+    lineNumbersInTable: true
+    noClasses: true
+    noHl: false
+    style: tango
+
+disableKinds:
+- taxonomy
+- term
+
+enableGitInfo: true
+enableRobotsTXT: true
+removePathAccents: true
+
+services:
+  googleAnalytics:
+    id: G-0LY4P7KRHP
+
+privacy:
+  googleAnalytics:
+    disable: false
+    respectDoNotTrack: true
+  disqus:
+    disable: true
+  instagram:
+    disable: true
+  twitter:
+    disable: true
+  vimeo:
+    disable: true
+  youtube:
+    disable: true
+
+minify:
+  minifyOutput: true
