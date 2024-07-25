@@ -8,17 +8,17 @@ on:
 
 jobs:
   deploy:
+    name: Deploy
     runs-on: ubuntu-latest
     concurrency:
       group: ${{ github.workflow }}
     env:
-      HUGO_CACHEDIR: /tmp/hugo_cache
       HUGO_VERSION: latest
     steps:
       - uses: actions/checkout@v4
         with:
-          submodules: true  # Fetch Hugo themes (true OR recursive)
-          fetch-depth: 0    # Fetch all history for .GitInfo and .Lastmod
+          submodules: true
+          fetch-depth: 0
 
       - name: Setup version
         run: |
@@ -31,13 +31,6 @@ jobs:
         uses: peaceiris/actions-hugo@v3
         with:
           hugo-version: ${{ env.HUGO_VERSION }}
-
-      - uses: actions/cache@v4
-        with:
-          path: ${{ env.HUGO_CACHEDIR }}
-          key: ${{ runner.os }}-hugomod-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-hugomod-
 
       - name: Build
         run: make build
