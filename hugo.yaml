@@ -18,8 +18,20 @@ menus:
 
 theme: hyde
 params:
-  layoutReverse: true
   description: Ramblings from a human debugger living on the west coast of Denmark
+
+markup:
+  highlight:
+    anchorLineNos: false
+    codeFences: true
+    guessSyntax: false
+    lineAnchors: ""
+    lineNoStart: 1
+    lineNos: false
+    lineNumbersInTable: true
+    noClasses: true
+    noHl: false
+    style: tango
 
 disableKinds:
 - taxonomy
