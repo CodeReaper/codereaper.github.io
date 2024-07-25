@@ -1,7 +1,7 @@
-baseURL: https://codereaper.com
-languageCode: en-us
-timeZone: Europe/Copenhagen
 title: CodeReaper
+baseURL: https://codereaper.com
+timeZone: Europe/Copenhagen
+languageCode: en-us
 
 permalinks:
   page:
@@ -15,11 +15,6 @@ menus:
   - name: About
     pageRef: /about
     weight: 20
-
-pagination:
-  disableAliases: false
-  pagerSize: 5
-  path: blog/page
 
 theme: hyde
 params:
@@ -54,4 +49,4 @@ privacy:
     disable: true
 
 minify:
-  minifyOutput: false
+  minifyOutput: true
