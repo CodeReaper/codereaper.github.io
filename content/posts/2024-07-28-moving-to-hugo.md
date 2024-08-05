@@ -53,7 +53,16 @@ The non-post urls defaults to pretty urls like `/about/`. Easy.
 
 ### Paginator
 
-FIXME
+I dislike the `Read more` functionality and without those links showing multiple posts per page is just odd.
+
+Instead of recreating an exact match of the old blog I went with always showing a single full post. The full post has links to the next and previous posts. To achieve this I had to manipulate some Go template layouts. The relevant layouts:
+
+- `layouts/_default/list.html` - House keeping, since it is no longer in use
+- `layouts/_default/single.html` - Update to show a single post with next and previous links
+
+The `list.html` file could be an empty file, since there are no listing of posts anywhere.
+
+The `single.html` file I have appended the following code snippet to display a previous link, if one exist, a next link, if one exist and a dash in between the two links if they both exist.
 
 ```go-html-template
 {{ $hasNext := and .Page.Next (eq .Page.Next.Type "posts") }}
@@ -70,11 +79,21 @@ FIXME
 {{ end }}
 ```
 
+Note that the variables set up in the beginning checks the type of the next and previous pages, since non-post pages are considered eligible next or previous pages.
+
 ### Redirection
 
-FIXME
+In the previous section I claimed:
 
-```go
+> ... there are no listing of posts anywhere.
+
+... and you may have thought "What about the index then?"
+
+I do have to handle the index page, but I am going to cheat and have the index redirect to the latest post instead!
+
+The `layouts/index.html` file therefore is as simple as the following code snippet.
+
+```go-html-template
 <!DOCTYPE html>
 <html lang="en-us">
   <head>
@@ -86,6 +105,17 @@ FIXME
     {{ end }}
   </head>
 </html>
+```
+
+In the original post about Jekyll I wrote about taking care of old pretty URL and not breaking them. The index file there has just been put in place only sets up redirection from `/` to `/blog/YYYY/latest-post`. The old blog considered `/blog/` as a valid entry point too.
+
+Luckily Hugo supports defining an alias for a page in its frontmatter, also in otherwise empty index pages. This allows me to generate a redirection to the latest post at both `/` and `/blog/` with the following snippet:
+
+```go-html-template
+---
+aliases:
+ - /blog
+---
 ```
 
 ### Code Highlights
