@@ -27,19 +27,19 @@ Everything was pain and in near desperation I looked for an alternative.
 
 I found [Hugo](https://gohugo.io). It does the same job. It has mostly the same type of theme integration. Best of all it is written in [Go](https://go.dev), so it is fast and will not break on _every_ single version update.
 
-Hugo also seems to much customizable provided you are familiar with Go.
+Hugo also seems to be much customizable provided you are familiar with Go.
 
-## Recreation
+However since I am no longer using Jekyll that means recreating the source code will be slightly more difficult.
 
-Since I am no longer using Jekyll recreating the source code will be slightly more difficult.
-
-### The Theme
+### Hugo and the Old Theme
 
 I was lucky enough that the theme [Hyde](https://github.com/spf13/hyde/tree/208a9e3f6bfcfd44f4ee93f5eaba22119b00ffe4) had been ported many years ago. Alas an old theme goes come with problems that needs a lot of "intervention", so instead of adding it as a git submodule. Doing so means I will not easily get updates, but means I can just remove files instead of making sure I override what those files do.
 
 I am left with the directory `themes/hyde/...` that contains only the unaltered files.
 
-### Pretty URLs
+FIXME - css overrides?
+
+### Hugo and the Pretty URLs
 
 To keep blog post urls the same as the old blog was fairly easy. Hugo has a configuration file in the root of the repository named `hugo.yaml`, which can be configured with:
 
@@ -51,7 +51,7 @@ permalinks:
 
 The non-post urls defaults to pretty urls like `/about/`. Easy.
 
-### Paginator
+### Hugo and the Reworking of Paginating
 
 I dislike the `Read more` functionality and without those links showing multiple posts per page is just odd.
 
@@ -81,7 +81,7 @@ The `single.html` file I have appended the following code snippet to display a p
 
 Note that the variables set up in the beginning checks the type of the next and previous pages, since non-post pages are considered eligible next or previous pages.
 
-### Redirection
+### Hugo and the Consistency and Redirection
 
 In the previous section I claimed:
 
@@ -118,17 +118,76 @@ aliases:
 ---
 ```
 
-### Code Highlights
+### Hugo and the Highlights of Code
 
-FIXME
+It turns out that code highlighting is a whole new beast in Hugo.
 
-### Assets
+There is support for quite a lot of [lexers with Chroma](https://gohugo.io/content-management/syntax-highlighting/#list-of-chroma-highlighting-languages), but the syntax highlighting is just the start. There are [options](https://gohugo.io/content-management/syntax-highlighting/#highlight-shortcode) that allows for line numbering, actual highlighting specific lines, etc.
 
-FIXME
+Consider the following markdown:
 
-Extra copy - builtin
+````txt
+```go {linenos=table,hl_lines=[5,"10-13"],linenostart=28}
+func download(flags *Flags, service Service) error {
+	if err := flags.validate(); err != nil {
+		return err
+	}
+
+	mimeType, err := lookupMimeType(flags.Format)
+	if err != nil {
+		return err
+	}
+
+	resp, err := service.download(flags.DocumentId, mimeType)
+	if err != nil {
+		return err
+	}
+
+	return handleResponse(resp, flags.Output)
+}
+```
+````
+
+This will produce the following output:
+
+```go {linenos=table,hl_lines=[6,"11-14"],linenostart=28}
+func download(flags *Flags, service Service) error {
+	if err := flags.validate(); err != nil {
+		return err
+	}
+
+	mimeType, err := lookupMimeType(flags.Format)
+	if err != nil {
+		return err
+	}
+
+	resp, err := service.download(flags.DocumentId, mimeType)
+	if err != nil {
+		return err
+	}
+
+	return handleResponse(resp, flags.Output)
+}
+```
+
+### Hugo and the Assets
+
+When I built the original blog with Jekyll I made sure that assets were grouped per post. I would not have to really do anything special to have assets grouped with the post they belong to with Hugo. You are supposed to place an asset with `contents/posts/name-of-post/asset.file` and refer to said asset in markdown with `[asset](asset.file)`.
+
+That did however pose a problem if anyone had linked directly to an asset in any of my old posts. There did not seem to be anyway of redirecting to its new location or automatically duplicating the file. I am going to cheat again. You simply manually duplicate these assets by coping them to `static/path-it-had/asset.file`.
 
 ## GitHub
+
+Losing your code is generally not a fun experience. This time to ensure the code is not lost again I am placing it on GitHub. There are many good reasons to do so:
+
+- Free
+- High availability
+- Well-known
+- Et cetera
+
+GitHub has also changed in the 10 years since the old blog was made and now. They finally offer [unlimited private repositories](https://github.blog/news-insights/product-news/introducing-unlimited-private-repositories/) which, as far as I can recall, was my main reason to not place the blog in GitHub originally.
+
+You may find that funny (for multiple reasons) since my new blog is in fact not a private repository, but more on that later.
 
 FIXME
 
