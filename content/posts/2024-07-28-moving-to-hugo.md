@@ -37,7 +37,11 @@ I was lucky enough that the theme [Hyde](https://github.com/spf13/hyde/tree/208a
 
 I am left with the directory `themes/hyde/...` that contains only the unaltered files.
 
-FIXME - css overrides?
+When I used the Hyde theme original I found a problem, that I described in the my original first post as:
+
+> Other users of Hyde may notice the layout looks slightly different. I had to make the sidebar area larger since the CodeReaper name is too long, especially in comparison to the name Hyde. 
+
+I still do not want my name to be split into multiple parts, so I have added a link to a stylesheet in the hook made available by the theme that overrides some of its styles.
 
 ### Hugo and the Pretty URLs
 
@@ -122,7 +126,7 @@ aliases:
 
 It turns out that code highlighting is a whole new beast in Hugo.
 
-There is support for quite a lot of [lexers with Chroma](https://gohugo.io/content-management/syntax-highlighting/#list-of-chroma-highlighting-languages), but the syntax highlighting is just the start. There are [options](https://gohugo.io/content-management/syntax-highlighting/#highlight-shortcode) that allows for line numbering, actual highlighting specific lines, etc.
+There is support for quite a lot of [lexers with Chroma](https://gohugo.io/content-management/syntax-highlighting/#list-of-chroma-highlighting-languages), but the syntax highlighting is just the start. There are [options](https://gohugo.io/content-management/syntax-highlighting/#highlight-shortcode) that allows for line numbering, actual highlighting specific lines, etc. You can even preview the syntax highlighting of some sample code with this [site xyproto](https://xyproto.github.io/splash/docs/) made.
 
 Consider the following markdown:
 
@@ -185,16 +189,10 @@ Losing your code is generally not a fun experience. This time to ensure the code
 - Well-known
 - Et cetera
 
-GitHub has also changed in the 10 years since the old blog was made and now. They finally offer [unlimited private repositories](https://github.blog/news-insights/product-news/introducing-unlimited-private-repositories/) which, as far as I can recall, was my main reason to not place the blog in GitHub originally.
+GitHub has also changed in the 10 years since the old blog was made and now.
 
-You may find that funny (for multiple reasons) since my new blog is in fact not a private repository, but more on that later.
+GitHub finally offers [unlimited private repositories](https://github.blog/news-insights/product-news/introducing-unlimited-private-repositories/) which, as far as I can recall, was my main reason to not place the blog in GitHub originally. You may find that funny (for multiple reasons) since my [new blog repository](https://github.com/CodeReaper/codereaper.github.io) is in fact not a private repository, but there is good reason for that coming in a bit.
 
-FIXME
+GitHub had pages with support for custom domains, but now also has https support for these custom domains and workflow for automatic deployment.
 
-### Free Safe Hosting
-
-FIXME custom domain too
-
-### Automatic Deployment
-
-FIXME
+All these features are free (for public repositories - see, I had a good reason).
