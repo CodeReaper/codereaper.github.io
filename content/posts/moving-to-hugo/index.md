@@ -1,5 +1,5 @@
 ---
-title: Moving To Hugo
+title: Moving to Hugo
 date: 2024-07-28T00:00:00+02:00
 draft: false
 ---
