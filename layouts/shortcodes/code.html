@@ -1,0 +1,7 @@
+{{ $language := .Get "language" }}
+{{ $source := .Get "source" }}
+{{ $options := .Get "options" }}
+
+{{ with .Page.Resources.GetMatch $source }}
+  {{ highlight (trim .Content "\n\r") $language $options }}
+{{ end }}

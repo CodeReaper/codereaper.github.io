@@ -1,0 +1,11 @@
+{{ $summary := .Get "summary" }}
+{{ $language := .Get "language" }}
+{{ $source := .Get "source" }}
+{{ $options := .Get "options" }}
+
+{{ with .Page.Resources.GetMatch $source }}
+<details>
+  <summary>{{ $summary }}</summary>
+  {{ highlight (trim .Content "\n\r") $language $options }}
+</details>
+{{ end }}
