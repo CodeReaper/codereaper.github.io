@@ -9,8 +9,8 @@ permalinks:
 
 menus:
   main:
-  - name: Home
-    pageRef: /
+  - name: Posts
+    pageRef: /blog/posts
     weight: 10
   - name: About
     pageRef: /about

@@ -34,11 +34,3 @@ pre {
 .highlight {
   overflow-x: auto;
 }
-
-body {
-  -webkit-font-smoothing: antialiased;
-}
-
-.goat svg {
-  font-size: initial;
-}

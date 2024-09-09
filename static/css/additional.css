@@ -1,0 +1,34 @@
+body {
+    -webkit-font-smoothing: antialiased;
+}
+
+.goat svg {
+    font-size: initial;
+}
+
+table.plain, table.plain td, table.plain th {
+    border: initial;
+}
+
+table.plain tbody tr:nth-child(odd) td, table.plain tbody tr:nth-child(odd) th {
+    background-color: initial;
+}
+
+.blog-index table {
+    margin-top:30px;
+}
+
+.blog-index th.date {
+    text-align:left;
+    font-size: 1.3rem;
+}
+
+.blog-index td.date {
+    color: #757575;
+    text-align:right;
+    vertical-align: text-top;
+}
+
+.blog-index td {
+    padding-bottom: 1rem;
+}

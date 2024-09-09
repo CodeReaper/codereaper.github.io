@@ -1,0 +1,25 @@
+{{ define "main" -}}
+<div class="post blog-index">
+  <h1>{{ .Title }}</h1>
+
+  {{ .Content }}
+
+  <table class="plain">
+    <tbody>
+  {{ range (where .Site.RegularPages "Type" "in" (slice "posts")).GroupByDate "2006" }}
+      <tr>
+        <th class="date">{{ .Key }}</th>
+        <th></th>
+      </tr>
+    {{ range .Pages }}
+      <tr>
+        <td class="date"><span class="date">{{ .Date.Format "Jan" }}</span></td>
+        <td><a class="title" href="{{ .RelPermalink }}">{{ .Title }}</a></td>
+      </tr>
+    {{- end -}}
+  {{ end }}
+    </tbody>
+  </table>
+
+</div>
+{{- end }}
