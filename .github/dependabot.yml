@@ -5,12 +5,7 @@ updates:
     schedule:
       interval: weekly
   - package-ecosystem: docker
-    directory: /
-    file: Dockerfile.tester
-    schedule:
-      interval: weekly
-  - package-ecosystem: docker
-    directory: /
-    file: Dockerfile.builder
+    directories:
+      - "/Dockerfile.*"
     schedule:
       interval: weekly
