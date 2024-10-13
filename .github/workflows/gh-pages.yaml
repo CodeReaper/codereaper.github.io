@@ -20,18 +20,6 @@ jobs:
           submodules: true
           fetch-depth: 0
 
-      - name: Setup version
-        run: |
-          {
-            printf 'HUGO_VERSION='
-            grep ^hugo < .tool-versions | cut -d' ' -f2
-          } >> "${GITHUB_ENV}"
-
-      - name: Setup Hugo
-        uses: peaceiris/actions-hugo@v3
-        with:
-          hugo-version: ${{ env.HUGO_VERSION }}
-
       - name: Build
         run: make build
 
