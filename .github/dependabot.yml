@@ -6,6 +6,7 @@ updates:
       interval: weekly
   - package-ecosystem: docker
     directories:
-      - "/Dockerfile.*"
+      - /Dockerfile.hugo
+      - /Dockerfile.tester
     schedule:
       interval: weekly
