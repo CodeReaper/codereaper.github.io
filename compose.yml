@@ -1,0 +1,35 @@
+services:
+  tester:
+    build:
+      context: .
+      dockerfile: Dockerfile.tester
+    volumes:
+      - .:/workspace:ro
+    working_dir: /workspace
+  builder:
+    build:
+      context: .
+      dockerfile: Dockerfile.hugo
+    volumes:
+      - .:/workspace
+    working_dir: /workspace
+  render:
+    build:
+      context: .
+      dockerfile: Dockerfile.hugo
+    command: hugo --disableFastRender -D server --bind 0.0.0.0
+    ports:
+      - 127.0.0.1:1313:1313
+    volumes:
+      - .:/workspace
+    working_dir: /workspace
+  dockerlint:
+    image: hadolint/hadolint
+    entrypoint: /bin/hadolint
+    volumes:
+      - .:/workspace:ro
+    working_dir: /workspace
+  makelint:
+    image: mrtazz/checkmake
+    volumes:
+      - ./Makefile:/Makefile:ro
