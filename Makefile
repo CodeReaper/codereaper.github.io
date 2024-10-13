@@ -16,7 +16,7 @@ build: clean-build test
 test: $(tests)
 
 test-dependabot:
-	$(COMPOSE_RUN) tester check-jsonschema --builtin-schema dependabot .github/dependabot.yml
+	$(COMPOSE_RUN) tester check-jsonschema --schemafile /schemas/dependabot-2.0.json .github/dependabot.yml
 
 test-docker:
 	$(COMPOSE_RUN) dockerlint --ignore DL3018 Dockerfile.hugo
