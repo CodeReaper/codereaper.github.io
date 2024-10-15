@@ -7,16 +7,12 @@ services:
       - .:/workspace:ro
     working_dir: /workspace
   builder:
-    build:
-      context: .
-      dockerfile: Dockerfile.hugo
+    image: hugomods/hugo:git
     volumes:
       - .:/src
     working_dir: /src
   render:
-    build:
-      context: .
-      dockerfile: Dockerfile.hugo
+    image: hugomods/hugo:git
     command: hugo --disableFastRender -D server --bind 0.0.0.0
     ports:
       - 127.0.0.1:1313:1313
