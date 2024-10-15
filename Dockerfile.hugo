@@ -1,3 +1,0 @@
-FROM hugomods/hugo:git
-
-RUN apk add --no-cache tzdata
