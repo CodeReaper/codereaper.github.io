@@ -7,8 +7,8 @@ COMPOSE_RUN = docker compose run --rm --quiet-pull
 tests = $(shell grep -E '^test-.*:' Makefile | sed 's/:$$//')
 cleans = $(shell grep -E '^clean-.*:' Makefile | sed 's/:$$//')
 
-run: clean-build
-	docker compose up --quiet-pull render
+serve: clean-build
+	$(COMPOSE_RUN) --service-ports render
 
 build: clean-build test
 	$(COMPOSE_RUN) builder hugo --minify
