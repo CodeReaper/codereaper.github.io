@@ -1,6 +1,6 @@
 ---
 title: Docker desktop
-date: 2025-01-26T00:00:00+02:01
+date: 2025-01-26T00:00:00+02:00
 draft: false
 ---
 
@@ -17,24 +17,7 @@ Seemingly innocent enough changes - _but read on_ - however they do introduce an
 - Being logged out every time you update
 - Needing to have an actual application running
 
-Having been annoyed for long enough I wanted to investigate what my alternatives on macOS were... but you do not have to read about them, if you do not want to, by skipping ahead to [The Alternative](#the-alternative).
-
-## Rancher Desktop
-
-Spend a little time searching and you will find [Rancher Desktop](https://rancherdesktop.io) which is a "replacement" for Docker Desktop. You will need to configure certain things about the container runtime which can seem daunting unless you already know way too much about what is under the hood in the world of containers.
-
-Pros:
-- No required license
-- No user login
-
-Cons:
-- Same constant updates
-- Still need to have an actual application running
-- New pitfalls with incorrect setup
-
-FIXME:
-summation about moby at
-https://www.reddit.com/r/docker/comments/y3svky/docker_vs_moby_engine/?rdt=50381
+Having been annoyed for long enough I wanted to investigate what my alternatives on macOS were and find an alternative.
 
 ## Podman Desktop
 
@@ -51,11 +34,22 @@ Cons:
 - Still need to have an actual application running
 - New pitfalls with incorrect setup
 
+Should you want to try it out for yourself there is an excellent [in-depth Podman comparison](https://betterstack.com/community/guides/scaling-docker/podman-vs-docker/).
 
-FIXME:
-summation with differences: https://betterstack.com/community/guides/scaling-docker/podman-vs-docker/
+## Rancher Desktop
 
-## The Alternative
+Spend a little more time searching and you will find [Rancher Desktop](https://rancherdesktop.io) which is a "replacement" for Docker Desktop. You will need to configure certain things about the container runtime which can seem daunting unless you already know way too much about what is under the hood in the world of containers.
+
+Pros:
+- No required license
+- No user login
+
+Cons:
+- Same constant updates
+- Still need to have an actual application running
+- New pitfalls with incorrect setup
+
+## Docker
 
 Instead of Docker Desktop you can simply use `docker` - as in the same way that docker is used on Linux.
 
@@ -69,22 +63,59 @@ Cons:
 - More complex installation
 
 ### Installation Guide
-#FIXME:
-- brew
-- brew install docker colima docker-compose docker-buildx docker-credential-helper
-- colima start --cpu 1 --memory 2 --disk 40
-- brew services start colima
-```
-"cliPluginsExtraDirs" to ~/.docker/config.json:
-  "cliPluginsExtraDirs": [
-      "/opt/homebrew/lib/docker/cli-plugins"
-  ]
+
+Let us install `docker` via Homebrew - see [brew.sh](https://brew.sh) for setting up `brew`.
+
+**1** - Install docker CLI, its plugins and a virtual machine
+
+```sh
+brew install docker \
+  docker-compose \
+  docker-buildx \
+  docker-credential-helper \
+  colima
 ```
 
-If k8s:
+**2** - Configure docker plugins and virtual machine
 
-- brew install kind, helm and kubectl
-- `kind create cluster`
+```sh
+sed 's/^X//' > ~/.docker/config.json << '44efc9cfeb966'
+X{
+X  "auths": {},
+X  "credsStore": "osxkeychain",
+X  "currentContext": "colima",
+X  "cliPluginsExtraDirs": [
+X    "/opt/homebrew/lib/docker/cli-plugins"
+X  ]
+X}
+44efc9cfeb966
+```
+
+*Note* that `osxkeychain` is only for macOS - but there are other [available options](https://github.com/docker/docker-credential-helpers#available-programs).
+
+**3** - Configure virtual machine resource usage
+
+```sh
+colima start --cpu 1 --memory 2 --disk 40
+```
+
+#FIXME: more here
+
+**4** - Set up virtual machine daemon
+
+```sh
+brew services start colima
+```
+
+**5** - Install kubernetes tooling (Optional)
+
+```sh
+brew install kind helm kubectl
+```
+
+```sh
+kind create cluster
+```
 
 #### Updating tho
 #FIXME:
