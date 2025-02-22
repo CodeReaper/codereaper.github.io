@@ -4,7 +4,7 @@ date: 2025-02-23T00:00:00+02:00
 draft: false
 ---
 
-Once upon a time something happened to [Docker](https://www.docker.com), the CLI tool for managing images and containers on your machine. Docker had begun changing and with change by change over time had become something different at least for those using macOS (or Windows is outside the scope of this post).
+Once upon a time something happened to [Docker](https://www.docker.com), the CLI tool for managing images and containers on your machine. Docker had begun changing and with change by change over time had become something different at least for those using macOS.
 
 The most evident changes being:
 
@@ -34,7 +34,7 @@ Cons:
 - Still need to have an actual application running
 - New pitfalls with incorrect setup
 
-Should you want to try it out for yourself there is an excellent [in-depth Podman comparison](https://betterstack.com/community/guides/scaling-docker/podman-vs-docker/).
+Should you want to try Podman out for yourself there is an excellent [in-depth comparison](https://betterstack.com/community/guides/scaling-docker/podman-vs-docker/) to Docker.
 
 ## Rancher Desktop
 
@@ -63,7 +63,7 @@ Cons:
 - More complex installation
 - No update notification at all
 
-The more complex installation downside can be addressed with the installation guide below and then we can take a look at handling updates.
+The more complex installation downside can be addressed with the installation guide below and then we can take a look at options for handling updates.
 
 ### Installation Guide
 
@@ -94,11 +94,11 @@ X}
 44efc9cfeb966
 ```
 
-*Note* that `osxkeychain` is only for macOS - but there are other [available options](https://github.com/docker/docker-credential-helpers#available-programs).
+*Note* that credentials store `osxkeychain` is only for macOS and there are other [available options](https://github.com/docker/docker-credential-helpers#available-programs).
 
-**3** - Configure virtual machine resource usage (Optional)
+**3** - Optionally configure virtual machine resource usage
 
-By default `colima` will create a virtual machine with 2 CPUs, 2GiB memory and 100GiB storage, but you can tweak those settings with the first start command:
+By default [Colima](https://github.com/abiosoft/colima) will create a virtual machine with 2 CPUs, 2GiB memory and 100GiB storage, but you can tweak those settings with the first start command:
 
 ```sh
 colima start --cpu 1 --memory 2 --disk 40
@@ -106,7 +106,7 @@ colima start --cpu 1 --memory 2 --disk 40
 
 *Note* if you want to change those settings after it was started, you will need to stop it first.
 
-**4** - Set up virtual machine daemon
+**4** - Set up virtual machine as a daemon
 
 ```sh
 brew services start colima
@@ -114,7 +114,7 @@ brew services start colima
 
 ### Handling Updates
 
-It is up to your self to stay up to date with the update nagging from any of the desktop applications. This was always the case if you had anything else installed via `brew`.
+Without update nagging from any desktop application, it is up to yourself to stay up-to-date. This was always the case if you had anything else installed via `brew`.
 
 Applying the latest updates can be done with the following command:
 
