@@ -1,10 +1,10 @@
 ---
-title: Docker desktop
-date: 2025-01-26T00:00:00+02:00
+title: Setting Docker free
+date: 2025-02-23T00:00:00+02:00
 draft: false
 ---
 
-Once upon a time something happened to [Docker](https://www.docker.com), the CLI tool for managing images and containers on your machine. Docker had begun changing and with change by change over time had become something different at least for those on Windows and macOS.
+Once upon a time something happened to [Docker](https://www.docker.com), the CLI tool for managing images and containers on your machine. Docker had begun changing and with change by change over time had become something different at least for those using macOS (or Windows is outside the scope of this post).
 
 The most evident changes being:
 
@@ -61,6 +61,9 @@ Pros:
 
 Cons:
 - More complex installation
+- No update notification at all
+
+The more complex installation downside can be addressed with the installation guide below and then we can take a look at handling updates.
 
 ### Installation Guide
 
@@ -76,7 +79,7 @@ brew install docker \
   colima
 ```
 
-**2** - Configure docker plugins and virtual machine
+**2** - Add configuration for the plugins and virtual machine
 
 ```sh
 sed 's/^X//' > ~/.docker/config.json << '44efc9cfeb966'
@@ -93,13 +96,15 @@ X}
 
 *Note* that `osxkeychain` is only for macOS - but there are other [available options](https://github.com/docker/docker-credential-helpers#available-programs).
 
-**3** - Configure virtual machine resource usage
+**3** - Configure virtual machine resource usage (Optional)
+
+By default `colima` will create a virtual machine with 2 CPUs, 2GiB memory and 100GiB storage, but you can tweak those settings with the first start command:
 
 ```sh
 colima start --cpu 1 --memory 2 --disk 40
 ```
 
-#FIXME: more here
+*Note* if you want to change those settings after it was started, you will need to stop it first.
 
 **4** - Set up virtual machine daemon
 
@@ -107,108 +112,23 @@ colima start --cpu 1 --memory 2 --disk 40
 brew services start colima
 ```
 
-**5** - Install kubernetes tooling (Optional)
+### Handling Updates
+
+It is up to your self to stay up to date with the update nagging from any of the desktop applications. This was always the case if you had anything else installed via `brew`.
+
+Applying the latest updates can be done with the following command:
 
 ```sh
-brew install kind helm kubectl
+brew upgrade
 ```
 
-```sh
-kind create cluster
-```
-
-#### Updating tho
-#FIXME:
-
-### CLI How To
-
-For those needing a little help to get comfortable using the `docker` CLI there are "How To"s for a few common tasks that were usually done in the Docker Desktop application.
-
-#### Listing running containers
-
-```sh
-% docker ps
-CONTAINER ID   IMAGE               COMMAND                  CREATED      STATUS      PORTS                      NAMES
-90217dfd7c27   hugomods/hugo:git   "docker-entrypoint.s…"   7 days ago   Up 7 days   127.0.0.1:1313->1313/tcp   codereapergithubio-render-run-d1f5fc2bea43
-```
-
-#### Checking resource usage of containers
-
-```sh
-% docker container stats --no-stream -a
-CONTAINER ID   NAME                                         CPU %     MEM USAGE / LIMIT     MEM %     NET I/O           BLOCK I/O   PIDS
-90217dfd7c27   codereapergithubio-render-run-d1f5fc2bea43   1.33%     47.91MiB / 1.914GiB   2.45%     2.05MB / 26.2MB   0B / 0B     40
-```
-
-#### Stopping a running container
-
-```sh
-% docker container stop 90217dfd7c27
-90217dfd7c27
-```
-
-#### Checking which images are present
-
-```sh
-% docker images
-REPOSITORY                  TAG       IMAGE ID       CREATED          SIZE
-codereapergithubio-tester   latest    4e104ff00f74   17 minutes ago   66.7MB
-hugomods/hugo               git       cd0d7c15f208   9 days ago       99.2MB
-hadolint/hadolint           latest    2d306e4c9d04   2 years ago      24MB
-mrtazz/checkmake            latest    bcda60562f17   2 years ago      11.2MB
-```
-
-#### Checking disk usage of containers/images/volumes
-
-```sh
-% docker system df
-TYPE            TOTAL     ACTIVE    SIZE      RECLAIMABLE
-Images          4         1         192.9MB   101.9MB (52%)
-Containers      1         1         0B        0B
-Local Volumes   0         0         0B        0B
-Build Cache     5         0         199B      199B
-```
-
-#### Reclaiming all not-in-use disk usage
-
-```sh
-% docker system prune -a --volumes
-WARNING! This will remove:
-  - all stopped containers
-  - all networks not used by at least one container
-  - all anonymous volumes not used by at least one container
-  - all images without at least one container associated to them
-  - all build cache
-
-Are you sure you want to continue? [y/N] y
-Deleted Images:
-... skipped ...
-
-Deleted build cache objects:
-... skipped ...
-
-Total reclaimed space: 93.68MB
-```
-
-#### Scanning an image for CVEs
-
-#FIXME:
-https://www.pomerium.com/blog/docker-image-scanning-tools
-
-
-```sh
-docker run -v /var/run/docker.sock:/var/run/docker.sock -v $HOME/Library/Caches:/root/.cache/ aquasec/trivy:0.59.1 image python:3.4-alpine
-```
-
-```sh
-docker run --rm \
---volume /var/run/docker.sock:/var/run/docker.sock \
--e GRYPE_DB_CACHE_DIR=/tmp/grype \
--v $HOME/Library/Caches:/tmp/grype/ \
---name Grype anchore/grype:latest \
-python:3.4-alpine
-```
-
+You need to find an update strategy that suits your requirements:
+- Automated crontab action
+- [Homebrew Autoupdate](https://github.com/DomT4/homebrew-autoupdate)
+- Reoccurring calendar event
+- Monday morning updates
+- When I think of it
+- When I try to use a feature that is too new
 
 ### License Caveat
 
