@@ -13,7 +13,7 @@ services:
     working_dir: /src
   render:
     image: hugomods/hugo:git
-    command: hugo --disableFastRender -D server --bind 0.0.0.0
+    command: hugo --disableFastRender -DEF server --bind 0.0.0.0 --poll 700ms
     ports:
       - 127.0.0.1:1313:1313
     volumes:
