@@ -1,50 +1,50 @@
 ---
-title: Setting Docker free
+title: Docker on the CLI
 date: 2025-02-24T00:00:00+02:00
 draft: false
 ---
 
-### CLI How To
+It is always useful to be able to do your work from the command line. 
 
-For those needing a little help to get comfortable using the `docker` CLI there are "How To"s for a few common tasks that were usually done in the Docker Desktop application.
+For some time now, [Docker Desktop](https://www.docker.com) have been dulling the collective common knowledge about how to use `docker` on the command line.
 
-#### Listing running containers
+Let us address this knowledge gap - _while avoiding the basics_ - with a [Housekeeping](#housekeeping) section before we dive into [Tools](#tools).
+
+## Housekeeping
+
+For general housekeeping we need to check which images and containers exist, monitor their resource usage, and clean up any unnecessary or unused items.
+
+### A Good Tip
+
+As quick aside I need to mention that a lot of housekeeping can be avoided with the option `--rm` for instance when running an image:
 
 ```sh
-% docker ps
+% docker run --rm hello-world
+```
+
+The option `--rm` effectively cleans up after itself.
+> Automatically remove the container and its associated anonymous volumes when it exits
+
+### Listing
+
+```sh
+% docker ps # alias for `docker container ls`
 CONTAINER ID   IMAGE               COMMAND                  CREATED      STATUS      PORTS                      NAMES
 90217dfd7c27   hugomods/hugo:git   "docker-entrypoint.s…"   7 days ago   Up 7 days   127.0.0.1:1313->1313/tcp   codereapergithubio-render-run-d1f5fc2bea43
+
+% docker images # alias for `docker image ls`
+REPOSITORY                TAG          IMAGE ID       CREATED         SIZE
+hugomods/hugo             git          cd0d7c15f208   3 weeks ago     99.2MB
+hello-world               latest       f1f77a0f96b7   5 weeks ago     5.2kB
 ```
 
-#### Checking resource usage of containers
+### Resource Usage
 
 ```sh
-% docker container stats --no-stream -a
+% docker stats --no-stream
 CONTAINER ID   NAME                                         CPU %     MEM USAGE / LIMIT     MEM %     NET I/O           BLOCK I/O   PIDS
 90217dfd7c27   codereapergithubio-render-run-d1f5fc2bea43   1.33%     47.91MiB / 1.914GiB   2.45%     2.05MB / 26.2MB   0B / 0B     40
-```
 
-#### Stopping a running container
-
-```sh
-% docker container stop 90217dfd7c27
-90217dfd7c27
-```
-
-#### Checking which images are present
-
-```sh
-% docker images
-REPOSITORY                  TAG       IMAGE ID       CREATED          SIZE
-codereapergithubio-tester   latest    4e104ff00f74   17 minutes ago   66.7MB
-hugomods/hugo               git       cd0d7c15f208   9 days ago       99.2MB
-hadolint/hadolint           latest    2d306e4c9d04   2 years ago      24MB
-mrtazz/checkmake            latest    bcda60562f17   2 years ago      11.2MB
-```
-
-#### Checking disk usage of containers/images/volumes
-
-```sh
 % docker system df
 TYPE            TOTAL     ACTIVE    SIZE      RECLAIMABLE
 Images          4         1         192.9MB   101.9MB (52%)
@@ -53,18 +53,18 @@ Local Volumes   0         0         0B        0B
 Build Cache     5         0         199B      199B
 ```
 
-#### Reclaiming all not-in-use disk usage
+The option `--no-stream` can be omitted to use the `stats` subcommand as a `top` command.
+> Disable streaming stats and only pull the first result
+
+### Cleaning Up
+
+**Note** that following command will remove everything not currently in use without confirmation.
 
 ```sh
-% docker system prune -a --volumes
-WARNING! This will remove:
-  - all stopped containers
-  - all networks not used by at least one container
-  - all anonymous volumes not used by at least one container
-  - all images without at least one container associated to them
-  - all build cache
+% docker system prune -af --volumes  
+Deleted Containers:
+... skipped ...
 
-Are you sure you want to continue? [y/N] y
 Deleted Images:
 ... skipped ...
 
@@ -74,38 +74,57 @@ Deleted build cache objects:
 Total reclaimed space: 93.68MB
 ```
 
-#### Scanning an image for CVEs
+## Tools
 
-#FIXME:
-https://www.pomerium.com/blog/docker-image-scanning-tools
+FIXME: .. and below
+
+We will not be installing any tools, but instead we are going to run the tools using `docker run` commands. That way we only need to maintain an `alias` file or some similar.
+
+### CVE Scanning
+
+It can be good to have options for scanning your images, so let us take a look at two scanning tool options.
+
+#### [Grype](https://anchore.com/opensource/)
+
+{{<code language="plain" source="grype.output">}}
+
+{{<collapsed-code summary="Show alias" language="sh" source="grype.alias">}}
+
+#### [Trivy](https://trivy.dev/)
+
+{{<code language="plain" source="trivy.output">}}
+
+{{<collapsed-code summary="Show alias" language="sh" source="trivy.alias">}}
+
+### Explore Image Contents
+
+#### [Dive](https://github.com/wagoodman/dive)
+
+Allows you to view each layers command, directories and files which can be very helpful in a debugging situation. This is an interactive tool, so it is hard to show the output from `dive` therefore I am borrowing their own introduction gif:
+
+![Animation showing the functions in dive](dive-demo.gif)
+
+{{<collapsed-code summary="Show alias" language="sh" source="dive.alias">}}
+
+**Note** you cannot view the contents of a file (yet - see [#336](https://github.com/wagoodman/dive/issues/336)).
 
 
-```sh
-docker run -v /var/run/docker.sock:/var/run/docker.sock -v $HOME/Library/Caches:/root/.cache/ aquasec/trivy:0.59.1 image python:3.4-alpine
-```
-
-```sh
-docker run --rm \
---volume /var/run/docker.sock:/var/run/docker.sock \
--e GRYPE_DB_CACHE_DIR=/tmp/grype \
--v $HOME/Library/Caches:/tmp/grype/ \
---name Grype anchore/grype:latest \
-python:3.4-alpine
-```
 
 
+### more
+
+https://github.com/project-copacetic/copacetic
+
+https://github.com/LanikSJ/dfimage
+
+https://github.com/anchore/syft
+docker run --rm ghcr.io/anchore/syft 
 
 
-- minifying images - https://github.com/slimtoolkit/examples
-- exploring images - https://github.com/wagoodman/dive
-
-
+## Missing Out
 
 paid features: 
 - https://www.docker.com/blog/november-2024-updated-plans-announcement/
 - Debug of distroless images
 	- https://docs.docker.com/reference/cli/docker/debug/
 - Docker Desktop, Docker Hub, Docker Build Cloud, Docker Scout, and Testcontainers Cloud
-
-
-

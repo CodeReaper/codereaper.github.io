@@ -1,0 +1,7 @@
+alias grype='
+mkdir -p /tmp/grype && \
+docker run --rm \
+-v /var/run/docker.sock:/var/run/docker.sock \
+-v /tmp/grype:/tmp \
+-e GRYPE_DB_CACHE_DIR=/tmp/grype \
+anchore/grype $@'

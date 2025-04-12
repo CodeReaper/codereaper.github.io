@@ -1,0 +1,3 @@
+% grype python:alpine
+NAME    INSTALLED  FIXED-IN  TYPE    VULNERABILITY  SEVERITY 
+python  3.13.2     3.14.0    binary  CVE-2024-3220  Unknown
