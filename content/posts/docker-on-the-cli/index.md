@@ -1,10 +1,10 @@
 ---
 title: Docker on the CLI
-date: 2025-02-24T00:00:00+02:00
+date: 2025-04-27T22:00:00+02:00
 draft: false
 ---
 
-It is always useful to be able to do your work from the command line. 
+It is always useful to be able to do your work from the command line.
 
 For some time now, [Docker Desktop](https://www.docker.com) have been dulling the collective common knowledge about how to use `docker` on the command line.
 
@@ -61,7 +61,7 @@ The option `--no-stream` can be omitted to use the `stats` subcommand as a `top`
 **Note** that following command will remove everything not currently in use without confirmation.
 
 ```sh
-% docker system prune -af --volumes  
+% docker system prune -af --volumes
 Deleted Containers:
 ... skipped ...
 
@@ -75,8 +75,6 @@ Total reclaimed space: 93.68MB
 ```
 
 ## Tools
-
-FIXME: .. and below
 
 We will not be installing any tools, but instead we are going to run the tools using `docker run` commands. That way we only need to maintain an `alias` file or some similar.
 
@@ -108,23 +106,46 @@ Allows you to view each layers command, directories and files which can be very 
 
 **Note** you cannot view the contents of a file (yet - see [#336](https://github.com/wagoodman/dive/issues/336)).
 
+### SBOMs with [Syft](https://github.com/anchore/syft)
 
+Syft is an easy-to-use tool for generating Software Bill of Materials for container images (and filesystems).
 
+{{<code language="plain" source="syft.output">}}
 
-### more
+{{<collapsed-code summary="Show alias" language="sh" source="syft.alias">}}
 
-https://github.com/project-copacetic/copacetic
+### Reverse-engineer a Dockerfile with [dfimage](https://github.com/LanikSJ/dfimage)
 
-https://github.com/LanikSJ/dfimage
+Take a peak at how others have made their Dockerfile.
 
-https://github.com/anchore/syft
-docker run --rm ghcr.io/anchore/syft 
+{{<code language="plain" source="dfimage.output">}}
 
+{{<collapsed-code summary="Show alias" language="sh" source="dfimage.alias">}}
 
 ## Missing Out
 
-paid features: 
-- https://www.docker.com/blog/november-2024-updated-plans-announcement/
-- Debug of distroless images
-	- https://docs.docker.com/reference/cli/docker/debug/
-- Docker Desktop, Docker Hub, Docker Build Cloud, Docker Scout, and Testcontainers Cloud
+You might be wondering, what are we missing out on by not using Docker Desktop and you _are_ missing three things:
+
+- Docker Scout
+- Docker Cloud
+- Docker Debug
+
+### Docker Scout
+
+Scout can present you with an assessment score of an images vulnerabilities. This score is meaningless if you ignoring the "high number, bad" and "low number, good" arguments. You still need evaluate the risks of your application, its use-cases and risk profile.
+
+You have tools above to generate a list of software and versions used in an image or a list of vulnerabilities to evaluate.
+
+### Docker Cloud
+
+Docker Build Cloud and Testcontainers Cloud are both ... ridiculous. They are marketed as time-saving tools and they are both the ability to do `docker build` and `docker run`, but in the cloud.
+
+Your builds and tests should not take long, and the solution is not to send your code to a third-party and have them run it.
+
+If - _and there should not be a need for it_ - you really need to offload building and testing from the developers machine, use your own build server, or a free one from [GitHub](github.com).
+
+### [Docker Debug](https://docs.docker.com/reference/cli/docker/debug/)
+
+This is the ability to have a shell on a distroless image. This could be really useful.
+
+The `dive` tool mentioned above should be enough, especially once we have the ability to view the contents of a file.

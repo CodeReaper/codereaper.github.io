@@ -1,0 +1,6 @@
+% dfimage aquasec/trivy
+FROM alpine:latest
+RUN /bin/sh -c apk --no-cache add ca-certificates git # buildkit
+COPY trivy /usr/local/bin/trivy # buildkit
+COPY contrib/*.tpl contrib/ # buildkit
+ENTRYPOINT ["trivy"]

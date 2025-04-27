@@ -1,4 +1,4 @@
-% trivy python:alpine                                                                                                                                                                             
+% trivy python:alpine
 2025-03-30T15:50:42Z	INFO	[vuln] Vulnerability scanning is enabled
 2025-03-30T15:50:42Z	INFO	[secret] Secret scanning is enabled
 2025-03-30T15:50:42Z	INFO	[secret] If your scanning is slow, please try '--scanners vuln' to disable secret scanning
