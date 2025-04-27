@@ -1,0 +1,6 @@
+alias trivy='
+mkdir -p /tmp/trivy && \
+docker run --rm \
+-v /var/run/docker.sock:/var/run/docker.sock \
+-v /tmp/trivy:/root/.cache/ \
+aquasec/trivy image $@'

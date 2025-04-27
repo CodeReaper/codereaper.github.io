@@ -1,0 +1,1 @@
+alias syft='docker run --rm ghcr.io/anchore/syft $@'

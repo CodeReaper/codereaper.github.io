@@ -112,6 +112,12 @@ colima start --cpu 1 --memory 2 --disk 40
 brew services start colima
 ```
 
+**5** - Make Colima more [docker friendly](https://github.com/abiosoft/colima/blob/main/docs/FAQ.md#cannot-connect-to-the-docker-daemon-at-unixvarrundockersock-is-the-docker-daemon-running)
+
+```sh
+sudo ln -sf $HOME/.colima/default/docker.sock /var/run/docker.sock
+```
+
 ### Handling Updates
 
 Without update nagging from any desktop application, it is up to yourself to stay up-to-date. This was always the case if you had anything else installed via `brew`.
