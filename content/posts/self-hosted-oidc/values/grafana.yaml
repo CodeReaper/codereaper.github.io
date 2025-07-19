@@ -1,0 +1,32 @@
+testFramework:
+  enabled: false
+
+envFromSecret: client-secret
+grafana.ini:
+  analytics:
+    check_for_updates: false
+    reporting_enabled: false
+    check_for_plugin_updates: false
+    feedback_links_enabled: false
+  server:
+    root_url: http://grafana.127.0.0.1.nip.io
+  security:
+    disable_initial_admin_creation: true
+  auth:
+    disable_login_form: true
+  auth.generic_oauth:
+    name: Dex
+    enabled: true
+    client_id: grafana
+    client_secret: $__env{CLIENT_SECRET}
+    scopes: openid email profile groups offline_access
+    auth_url: http://dex.127.0.0.1.nip.io/auth
+    token_url: http://dex.127.0.0.1.nip.io/token
+    api_url: http://dex.127.0.0.1.nip.io/userinfo
+
+ingress:
+  enabled: false
+
+sidecar:
+  dashboards:
+    enabled: false

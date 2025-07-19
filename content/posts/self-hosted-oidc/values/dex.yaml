@@ -1,0 +1,50 @@
+envFrom:
+  - secretRef:
+      name: client-secrets
+
+config:
+  issuer: http://dex.127.0.0.1.nip.io
+
+  staticClients:
+    - id: argocd
+      name: ArgoCD
+      secretEnv: ARGO_CD_CLIENT_SECRET
+      redirectURIs:
+        - http://argo.127.0.0.1.nip.io/auth/callback
+    - id: grafana
+      name: Grafana
+      secretEnv: GRAFANA_CLIENT_SECRET
+      redirectURIs:
+        - http://grafana.127.0.0.1.nip.io/login/generic_oauth
+
+  oauth2:
+    skipApprovalScreen: true
+
+  storage:
+    type: memory
+
+  connectors:
+    - type: ldap
+      id: glauth
+      name: GLAuth
+      config:
+        host: ldap.dex.svc:3893
+        insecureNoSSL: true
+        bindDN: cn=bind,dc=glauth,dc=com
+        bindPW: aa301866-4eb0-48f8-b057-b585002a1e63
+
+        userSearch:
+          baseDN: 'dc=glauth,dc=com'
+          filter: '(objectClass=*)'
+          username: 'uid'
+          idAttr: 'uid'
+          emailAttr: 'mail'
+          nameAttr: 'uid'
+
+        groupSearch:
+          baseDN: 'ou=users,dc=glauth,dc=com'
+          filter: '(objectClass=*)'
+          nameAttr: 'ou'
+          userMatchers:
+            - userAttr: uid
+              groupAttr: memberUid

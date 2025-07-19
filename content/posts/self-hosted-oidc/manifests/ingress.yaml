@@ -1,0 +1,50 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: argocd
+  namespace: argocd
+spec:
+  rules:
+    - host: argo.127.0.0.1.nip.io
+      http:
+        paths:
+          - pathType: ImplementationSpecific
+            backend:
+              service:
+                name: argocd-server
+                port:
+                  number: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: dex
+  namespace: dex
+spec:
+  rules:
+    - host: dex.127.0.0.1.nip.io
+      http:
+        paths:
+          - pathType: ImplementationSpecific
+            backend:
+              service:
+                name: dex
+                port:
+                  number: 5556
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: grafana
+  namespace: grafana
+spec:
+  rules:
+    - host: grafana.127.0.0.1.nip.io
+      http:
+        paths:
+          - pathType: ImplementationSpecific
+            backend:
+              service:
+                name: grafana
+                port:
+                  number: 80
