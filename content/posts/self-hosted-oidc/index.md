@@ -5,6 +5,7 @@ draft: false
 ---
 
 groups in grafana?
+ingresses?
 share txt lessons?
 
 

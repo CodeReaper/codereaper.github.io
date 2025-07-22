@@ -21,11 +21,14 @@ assemble:
 	-rm -rf $(tmp)
 	-mkdir -p $(tmp)
 
-	export ARGOCD=$$(openssl rand -hex 20) GRAFANA=$$(openssl rand -hex 20) REDIS=$$(openssl rand -hex 20) && \
+	export ARGOCD=$$(openssl rand -hex 20) GRAFANA=$$(openssl rand -hex 20) API=$$(openssl rand -hex 20) REDIS=$$(openssl rand -hex 20) && \
 		kubectl create secret generic --dry-run=client --output yaml --type=Opaque --from-literal "ARGO_CD_CLIENT_SECRET=$$ARGOCD" --from-literal "GRAFANA_CLIENT_SECRET=$$GRAFANA" --namespace dex client-secrets \
 			> $(tmp)/initial.yaml && \
 			printf -- '---\n' >> $(tmp)/initial.yaml && \
 		kubectl create secret generic --dry-run=client --output yaml --type=Opaque --from-literal "CLIENT_SECRET=$$GRAFANA" --namespace grafana client-secret \
+			>> $(tmp)/initial.yaml && \
+			printf -- '---\n' >> $(tmp)/initial.yaml && \
+		kubectl create secret generic --dry-run=client --output yaml --type=Opaque --from-literal "admin-user=api" --from-literal "admin-password=$$API" --namespace grafana credentials \
 			>> $(tmp)/initial.yaml && \
 			printf -- '---\n' >> $(tmp)/initial.yaml && \
 		kubectl create secret generic --dry-run=client --output yaml --type=Opaque --from-literal "auth=$$REDIS" --namespace argocd argocd-redis \
@@ -35,6 +38,8 @@ assemble:
 			>> $(tmp)/initial.yaml
 
 	curl -sfL https://raw.githubusercontent.com/kubernetes/ingress-nginx/helm-chart-4.11.2/deploy/static/provider/kind/deploy.yaml > $(tmp)/applications-part-1.yaml
+	printf -- '---\n' >> $(tmp)/applications-part-1.yaml
+	curl -sfL https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.8.0/components.yaml | yq 'with(select(.kind == "Deployment"); .spec.template.spec.containers[0].args += ["--kubelet-insecure-tls"])' >> $(tmp)/applications-part-1.yaml
 
 	helm template argocd argo-cd --version 7.8.15 --repo https://argoproj.github.io/argo-helm -n argocd -f values/argocd.yaml --create-namespace >> $(tmp)/base.yaml
 	printf -- '---\n' >> $(tmp)/base.yaml
@@ -65,7 +70,6 @@ create:
 
 apply:
 	$(kubectl) apply --server-side --force-conflicts -f $(tmp)/applications-part-2.yaml
-	@sleep 5
 	$(kubectl) rollout restart -n kube-system deployment/coredns
 
 	$(kubectl) rollout status -n grafana deployment
@@ -121,5 +125,5 @@ test-grafana:
 	@echo
 
 	@echo User profile:
-	$(curl) -fsLo - http://grafana.127.0.0.1.nip.io/api/user | yq $(tmp)/profile --input-format json
+	$(curl) -fsLo - http://grafana.127.0.0.1.nip.io/api/user | yq --input-format json
 	@echo

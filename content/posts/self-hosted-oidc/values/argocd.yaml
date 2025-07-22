@@ -29,6 +29,12 @@ configs:
       g, editor, role:admin
       g, viewer, role:readonly
 
+server:
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    hostname: argo.127.0.0.1.nip.io
+
 dex:
   enabled: false
 

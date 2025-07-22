@@ -10,8 +10,6 @@ grafana.ini:
     feedback_links_enabled: false
   server:
     root_url: http://grafana.127.0.0.1.nip.io
-  security:
-    disable_initial_admin_creation: true
   auth:
     disable_login_form: true
   auth.generic_oauth:
@@ -23,9 +21,18 @@ grafana.ini:
     auth_url: http://dex.127.0.0.1.nip.io/auth
     token_url: http://dex.127.0.0.1.nip.io/token
     api_url: http://dex.127.0.0.1.nip.io/userinfo
+    role_attribute_path: contains(groups[*], 'admin') && 'GrafanaAdmin' || contains(groups[*], 'editor') && 'Editor' || 'Viewer'
+    allow_assign_grafana_admin: true
+    role_attribute_strict: true
+
+admin:
+  existingSecret: credentials
 
 ingress:
-  enabled: false
+  enabled: true
+  ingressClassName: nginx
+  hosts:
+    - grafana.127.0.0.1.nip.io
 
 sidecar:
   dashboards:

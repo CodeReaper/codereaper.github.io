@@ -48,3 +48,43 @@ config:
           userMatchers:
             - userAttr: uid
               groupAttr: memberUid
+
+ingress:
+  enabled: true
+  className: nginx
+  hosts:
+    - host: dex.127.0.0.1.nip.io
+      paths:
+        - path: /
+          pathType: Prefix
+
+service:
+  ports:
+    http:
+      port: 80
+
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxSurge: 1
+    maxUnavailable: 0
+
+revisionHistoryLimit: 0
+
+volumes:
+  - name: tmp
+    emptyDir:
+      sizeLimit: 10Mi
+
+volumeMounts:
+  - name: tmp
+    mountPath: /tmp
+
+securityContext:
+  capabilities:
+    drop:
+      - ALL
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 1001

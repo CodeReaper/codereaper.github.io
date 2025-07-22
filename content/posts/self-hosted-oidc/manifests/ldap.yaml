@@ -76,6 +76,7 @@ metadata:
   namespace: dex
 spec:
   replicas: 1
+  revisionHistoryLimit: 0
   selector:
     matchLabels:
       app: ldap
@@ -84,10 +85,28 @@ spec:
       labels:
         app: ldap
     spec:
+# FIXME: ports, probes, sec context, mounts
+      automountServiceAccountToken: false
       containers:
         - name: ldap
-          image: glauth/glauth
-          resources: {}
+          image: glauth/glauth:v2.4.0
+          resources:
+            limits:
+              cpu: 10m
+              memory: 12Mi
+            requests:
+              cpu: 5m
+              memory: 12Mi
+          securityContext:
+            capabilities:
+              drop:
+                - ALL
+              add:
+               - NET_BIND #FIXME: nopre 
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1001 #FIXME: nopre
           volumeMounts:
             - name: ldap
               mountPath: /app/config/config.cfg
@@ -96,6 +115,13 @@ spec:
         - name: ldap
           configMap:
             name: ldap
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  terminationGracePeriodSeconds: 30
+  minReadySeconds: 0
 ---
 apiVersion: v1
 kind: Service
