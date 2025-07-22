@@ -43,8 +43,8 @@ build/initial.yaml:
 		kubectl create secret generic --dry-run=client --output yaml --type=Opaque --from-literal "ARGO_CD_CLIENT_SECRET=$$ARGOCD" --from-literal "GRAFANA_CLIENT_SECRET=$$GRAFANA" --namespace dex client-secrets > $(tmp)/a.0 && \
 		kubectl create secret generic --dry-run=client --output yaml --type=Opaque --from-literal "CLIENT_SECRET=$$GRAFANA" --namespace grafana client-secret > $(tmp)/a.1 && \
 		kubectl create secret generic --dry-run=client --output yaml --type=Opaque --from-literal "admin-user=api" --from-literal "admin-password=$$API" --namespace grafana credentials > $(tmp)/a.2 && \
-		kubectl create secret generic --dry-run=client --output yaml --type=Opaque --from-literal "auth=$$REDIS" --namespace argocd argocd-redis > $(tmp)/a.2 && \
-		kubectl create secret generic --dry-run=client --output yaml --type=Opaque --from-literal "CLIENT_SECRET=$$ARGOCD" --namespace argocd client-secret | yq '.metadata.labels."app.kubernetes.io/part-of" = "argocd"' > $(tmp)/a.3
+		kubectl create secret generic --dry-run=client --output yaml --type=Opaque --from-literal "auth=$$REDIS" --namespace argocd argocd-redis > $(tmp)/a.3 && \
+		kubectl create secret generic --dry-run=client --output yaml --type=Opaque --from-literal "CLIENT_SECRET=$$ARGOCD" --namespace argocd client-secret | yq '.metadata.labels."app.kubernetes.io/part-of" = "argocd"' > $(tmp)/a.4
 	yq $(tmp)/a.* > build/initial.yaml
 
 build/cluster-applications.yaml:
