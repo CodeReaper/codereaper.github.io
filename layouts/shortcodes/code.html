@@ -1,7 +1,50 @@
-{{ $language := .Get "language" }}
-{{ $source := .Get "source" }}
-{{ $options := .Get "options" }}
+{{- $language := .Get "language" -}}
+{{- $source   := .Get "source" -}}
+{{- $options  := .Get "options" | default "" -}}
+{{- $spec     := .Get "lines"   | default "" -}}
 
 {{ with .Page.Resources.GetMatch $source }}
-  {{ highlight (trim .Content "\n\r") $language $options }}
+  {{- $lines := split (trim .Content "\n\r") "\n" -}}
+  {{- $total := len $lines -}}
+
+  {{- $includeAll := eq $spec "" -}}
+
+  {{- /* Build a dict-as-set of 1-based line numbers to include */ -}}
+  {{- $keep := dict -}}
+  {{- if not $includeAll -}}
+    {{- range (split $spec ",") }}
+      {{- $part := trim . " " -}}
+      {{- if in $part "-" }}
+        {{- $bounds := split $part "-" -}}
+        {{- $s := int (index $bounds 0) -}}
+        {{- $e := int (index $bounds 1) -}}
+        {{- if lt $e $s }}{{ $tmp := $s }}{{ $s = $e }}{{ $e = $tmp }}{{ end -}}
+        {{- if lt $s 1 }}{{ $s = 1 }}{{ end -}}
+        {{- if gt $e $total }}{{ $e = $total }}{{ end -}}
+        {{- range seq $s $e }}
+          {{- $keep = merge $keep (dict (string .) true) -}}
+        {{- end -}}
+      {{- else }}
+        {{- $n := int $part -}}
+        {{- if and (gt $n 0) (le $n $total) }}
+          {{- $keep = merge $keep (dict (string $n) true) -}}
+        {{- end -}}
+      {{- end }}
+    {{- end }}
+  {{- end }}
+
+  {{- /* Collect the output as a single string */ -}}
+  {{- $content := "" -}}
+  {{- range $i, $line := $lines }}
+    {{- $lineNo := add $i 1 -}}
+    {{- if or $includeAll (index $keep (string $lineNo)) -}}
+      {{- if eq $content "" -}}
+        {{- $content = $line -}}
+      {{- else -}}
+        {{- $content = printf "%s\n%s" $content $line -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end }}
+
+  {{- highlight (trim $content "\n\r") $language $options -}}
 {{ end }}
