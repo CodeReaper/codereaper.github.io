@@ -99,7 +99,6 @@ DEX
 - issuer, connectors and staticClients
 - claims and groups - expand on ldap groups
 - clientSecrets
-- bindPW in a secret?
 
 ARGOCD
 - Configure connection with dex, including clientSecret

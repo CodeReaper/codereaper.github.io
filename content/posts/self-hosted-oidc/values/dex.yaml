@@ -1,6 +1,8 @@
 envFrom:
   - secretRef:
       name: client-secrets
+  - secretRef:
+      name: ldap
 
 config:
   issuer: http://dex.127.0.0.1.nip.io
@@ -31,7 +33,7 @@ config:
         host: ldap.dex.svc:3893
         insecureNoSSL: true
         bindDN: cn=bind,dc=glauth,dc=com
-        bindPW: aa301866-4eb0-48f8-b057-b585002a1e63
+        bindPW: '{{ .Env.LDAP_PASSWORD }}'
 
         userSearch:
           baseDN: 'dc=glauth,dc=com'

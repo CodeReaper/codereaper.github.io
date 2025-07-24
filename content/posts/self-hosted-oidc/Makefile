@@ -9,7 +9,7 @@ curl := curl --cookie $(jar) --cookie-jar $(jar)
 all: clean setup test
 
 verify-deps:
-	which docker kind kubectl helm curl yq base64 > /dev/null
+	which docker kind kubectl helm curl yq base64 sha256 > /dev/null
 
 clean: verify-deps
 	-kind -q delete cluster --name $(cluster)
@@ -25,7 +25,9 @@ configure: build/initial.yaml build/cluster-applications.yaml build/dex build/ar
 	helm template argocd build/argo-cd -n argocd -f values/argocd.yaml --create-namespace > $(tmp)/c.1
 	helm template grafana build/grafana -n grafana -f values/grafana.yaml --create-namespace > $(tmp)/c.2
 	yq 'select(.kind == "CustomResourceDefinition")' $(tmp)/c.* > build/crd.yaml
-	yq 'select(.kind and .kind != "CustomResourceDefinition")' $(tmp)/c.* manifests/*.yaml > build/applications.yaml
+	yq 'select(.kind and .kind != "CustomResourceDefinition")' $(tmp)/c.* manifests/*.yaml | \
+	sed s/is-replaced-with-ldap-hash/$$(yq '. | select(.metadata.name == "ldap") | .data.LDAP_PASSWORD' build/initial.yaml | base64 -d | sha256)/ \
+	> build/applications.yaml
 
 build/dex:
 	helm pull dex --version 0.19.1 --repo https://charts.dexidp.io --destination build --untar
@@ -39,12 +41,13 @@ build/grafana:
 build/initial.yaml:
 	-rm -rf $(tmp)
 	-mkdir -p $(tmp)
-	export ARGOCD=$$(openssl rand -hex 20) GRAFANA=$$(openssl rand -hex 20) API=$$(openssl rand -hex 20) REDIS=$$(openssl rand -hex 20) && \
+	export ARGOCD=$$(openssl rand -hex 20) GRAFANA=$$(openssl rand -hex 20) API=$$(openssl rand -hex 20) REDIS=$$(openssl rand -hex 20) LDAP=$$(openssl rand -hex 20) && \
 		kubectl create secret generic --dry-run=client --output yaml --type=Opaque --from-literal "ARGO_CD_CLIENT_SECRET=$$ARGOCD" --from-literal "GRAFANA_CLIENT_SECRET=$$GRAFANA" --namespace dex client-secrets > $(tmp)/a.0 && \
 		kubectl create secret generic --dry-run=client --output yaml --type=Opaque --from-literal "CLIENT_SECRET=$$GRAFANA" --namespace grafana client-secret > $(tmp)/a.1 && \
 		kubectl create secret generic --dry-run=client --output yaml --type=Opaque --from-literal "admin-user=api" --from-literal "admin-password=$$API" --namespace grafana credentials > $(tmp)/a.2 && \
 		kubectl create secret generic --dry-run=client --output yaml --type=Opaque --from-literal "auth=$$REDIS" --namespace argocd argocd-redis > $(tmp)/a.3 && \
-		kubectl create secret generic --dry-run=client --output yaml --type=Opaque --from-literal "CLIENT_SECRET=$$ARGOCD" --namespace argocd client-secret | yq '.metadata.labels."app.kubernetes.io/part-of" = "argocd"' > $(tmp)/a.4
+		kubectl create secret generic --dry-run=client --output yaml --type=Opaque --from-literal "CLIENT_SECRET=$$ARGOCD" --namespace argocd client-secret | yq '.metadata.labels."app.kubernetes.io/part-of" = "argocd"' > $(tmp)/a.4 && \
+		kubectl create secret generic --dry-run=client --output yaml --type=Opaque --from-literal "LDAP_PASSWORD=$$LDAP" --namespace dex ldap > $(tmp)/a.5 && \
 	yq $(tmp)/a.* > build/initial.yaml
 
 build/cluster-applications.yaml:

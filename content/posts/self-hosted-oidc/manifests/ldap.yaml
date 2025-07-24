@@ -29,7 +29,7 @@ data:
       name = "bind"
       uidnumber = 9001
       primarygroup = 5000
-      passsha256 = "6495843b3e9bd042ea52f9d7ab93e0809f943e489aeac287b3d762135c6b51f4" # aa301866-4eb0-48f8-b057-b585002a1e63
+      passsha256 = "is-replaced-with-ldap-hash"
       mail = "dex@service"
       [[users.capabilities]]
         action = "search"
