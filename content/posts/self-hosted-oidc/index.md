@@ -90,20 +90,18 @@ We can do this by updating the `ConfigMap` named `coredns` in the `kube-system` 
 
 ## Set Up the OIDC Provider
 
-LDAP
-- https://github.com/bitnami-labs/sealed-secrets for the hard way with sidecar assembly of config
-- easy way with straight up secret of config with hashed passwords
-(one for argocd and one for grafana - to discuss connector to client strategy?)
-
 DEX
 - issuer, connectors and staticClients
 - claims and groups - expand on ldap groups
 - clientSecrets
 
+LDAP
+- easy way with straight up secret of config with hashed passwords
+(one for argocd and one for grafana - to discuss connector to client strategy?)
+
 ARGOCD
 - Configure connection with dex, including clientSecret
 - Show test from old post, including new group claim
-- avoid requestedIDTokenClaims?
 
 GRAFANA
 - Configure connection with dex, including clientSecret

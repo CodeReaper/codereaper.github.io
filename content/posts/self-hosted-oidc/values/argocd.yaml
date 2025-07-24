@@ -19,9 +19,6 @@ configs:
         - profile
         - email
         - groups
-      requestedIDTokenClaims:
-        groups:
-          essential: true
 
   rbac:
     policy.default: role:none

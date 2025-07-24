@@ -1,10 +1,10 @@
 ---
 apiVersion: v1
-kind: ConfigMap
+kind: Secret
 metadata:
-  name: ldap
+  name: ldap-config
   namespace: dex
-data:
+stringData:
   ldap.cfg: |
     debug = false
 
@@ -131,8 +131,8 @@ spec:
               subPath: ldap.cfg
       volumes:
         - name: ldap
-          configMap:
-            name: ldap
+          secret:
+            secretName: ldap-config
 ---
 apiVersion: v1
 kind: Service
