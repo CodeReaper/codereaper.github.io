@@ -18,7 +18,7 @@ clean: verify-deps
 
 setup: verify-deps configure create apply
 
-configure: build/initial.yaml build/cluster-applications.yaml build/dex build/argo-cd build/grafana
+configure: build/secrets.yaml build/argocd-secrets.yaml build/cluster-applications.yaml build/dex build/argo-cd build/grafana
 	-rm -rf $(tmp)
 	-mkdir -p $(tmp)
 	helm template dex build/dex -n dex -f values/dex.yaml --create-namespace | yq '.metadata.namespace = "dex"' > $(tmp)/c.0
@@ -26,7 +26,7 @@ configure: build/initial.yaml build/cluster-applications.yaml build/dex build/ar
 	helm template grafana build/grafana -n grafana -f values/grafana.yaml --create-namespace > $(tmp)/c.2
 	yq 'select(.kind == "CustomResourceDefinition")' $(tmp)/c.* > build/crd.yaml
 	yq 'select(.kind and .kind != "CustomResourceDefinition")' $(tmp)/c.* manifests/*.yaml | \
-	sed s/is-replaced-with-ldap-hash/$$(yq '. | select(.metadata.name == "ldap") | .data.LDAP_PASSWORD' build/initial.yaml | base64 -d | sha256)/ \
+	sed s/is-replaced-with-ldap-hash/$$(yq '. | select(.metadata.name == "ldap") | .data.LDAP_PASSWORD' build/secrets.yaml | base64 -d | sha256)/ \
 	> build/applications.yaml
 
 build/dex:
@@ -38,17 +38,23 @@ build/argo-cd:
 build/grafana:
 	helm pull grafana --version 9.2.10 --repo https://grafana.github.io/helm-charts --destination build --untar
 
-build/initial.yaml:
+build/secrets.yaml:
 	-rm -rf $(tmp)
 	-mkdir -p $(tmp)
-	export ARGOCD=$$(openssl rand -hex 20) GRAFANA=$$(openssl rand -hex 20) API=$$(openssl rand -hex 20) REDIS=$$(openssl rand -hex 20) LDAP=$$(openssl rand -hex 20) && \
+	export ARGOCD=$$(openssl rand -hex 20) GRAFANA=$$(openssl rand -hex 20) LDAP=$$(openssl rand -hex 20) && \
 		kubectl create secret generic --dry-run=client --output yaml --type=Opaque --from-literal "ARGO_CD_CLIENT_SECRET=$$ARGOCD" --from-literal "GRAFANA_CLIENT_SECRET=$$GRAFANA" --namespace dex client-secrets > $(tmp)/a.0 && \
 		kubectl create secret generic --dry-run=client --output yaml --type=Opaque --from-literal "CLIENT_SECRET=$$GRAFANA" --namespace grafana client-secret > $(tmp)/a.1 && \
-		kubectl create secret generic --dry-run=client --output yaml --type=Opaque --from-literal "admin-user=api" --from-literal "admin-password=$$API" --namespace grafana credentials > $(tmp)/a.2 && \
-		kubectl create secret generic --dry-run=client --output yaml --type=Opaque --from-literal "auth=$$REDIS" --namespace argocd argocd-redis > $(tmp)/a.3 && \
 		kubectl create secret generic --dry-run=client --output yaml --type=Opaque --from-literal "CLIENT_SECRET=$$ARGOCD" --namespace argocd client-secret | yq '.metadata.labels."app.kubernetes.io/part-of" = "argocd"' > $(tmp)/a.4 && \
 		kubectl create secret generic --dry-run=client --output yaml --type=Opaque --from-literal "LDAP_PASSWORD=$$LDAP" --namespace dex ldap > $(tmp)/a.5 && \
-	yq $(tmp)/a.* > build/initial.yaml
+	yq $(tmp)/a.* > build/secrets.yaml
+
+build/argocd-secrets.yaml:
+	-rm -rf $(tmp)
+	-mkdir -p $(tmp)
+	export API=$$(openssl rand -hex 20) REDIS=$$(openssl rand -hex 20) && \
+		kubectl create secret generic --dry-run=client --output yaml --type=Opaque --from-literal "admin-user=api" --from-literal "admin-password=$$API" --namespace grafana credentials > $(tmp)/a.2 && \
+		kubectl create secret generic --dry-run=client --output yaml --type=Opaque --from-literal "auth=$$REDIS" --namespace argocd argocd-redis > $(tmp)/a.3 && \
+	yq $(tmp)/a.* > build/argocd-secrets.yaml
 
 build/cluster-applications.yaml:
 	-rm -rf $(tmp)
@@ -64,12 +70,14 @@ create:
 	$(kubectl) create namespace dex
 	$(kubectl) create namespace argocd
 	$(kubectl) create namespace grafana
+	$(kubectl) create namespace auth
 	$(kubectl) apply -f build/crd.yaml
 	$(kubectl) apply -f build/cluster-applications.yaml
 	$(kubectl) rollout status -n ingress-nginx deployment
 
 apply:
-	$(kubectl) apply --server-side --force-conflicts --wait -f build/initial.yaml
+	$(kubectl) apply --server-side --force-conflicts --wait -f build/secrets.yaml
+	$(kubectl) apply --server-side --force-conflicts --wait -f build/argocd-secrets.yaml
 	$(kubectl) apply --server-side --force-conflicts -f build/applications.yaml
 	$(kubectl) rollout restart -n kube-system deployment/coredns
 
@@ -81,50 +89,41 @@ apply:
 test: test-argocd test-grafana
 
 test-argocd:
-	-mkdir -p $(tmp)
-	-rm -f $(jar)
-	touch $(jar)
-	@echo
+	-@mkdir -p $(tmp)
+	-@rm -f $(jar)
+	@touch $(jar)
 
-	$(curl) -fsLo $(tmp)/login.html http://argo.127.0.0.1.nip.io/auth/login
-	grep -o 'action="[^"]*"' < $(tmp)/login.html | cut -d\" -f2 | sed 's/&amp;/\&/g' > $(tmp)/path
-	@echo
+	@$(curl) -fsLo $(tmp)/login.html http://argo.127.0.0.1.nip.io/auth/login
+	@grep -o 'action="[^"]*"' < $(tmp)/login.html | cut -d\" -f2 | sed 's/&amp;/\&/g' > $(tmp)/path
 
-	$(curl) -fsD $(tmp)/header.log -XPOST -d "login=alice&password=password123" "http://dex.127.0.0.1.nip.io$$(cat $(tmp)/path)"
-	grep ^Location $(tmp)/header.log | cut -d' ' -f2 | tr -d '\r' > $(tmp)/endpoint
-	@echo
+	@$(curl) -fsD $(tmp)/header.log -XPOST -d "login=alice&password=password123" "http://dex.127.0.0.1.nip.io$$(cat $(tmp)/path)"
+	@grep ^Location $(tmp)/header.log | cut -d' ' -f2 | tr -d '\r' > $(tmp)/endpoint
 
-	$(curl) -fso /dev/null "$$(cat $(tmp)/endpoint)"
-	@echo
+	@$(curl) -fso /dev/null "$$(cat $(tmp)/endpoint)"
 
-	grep argocd.token $(jar) | cut -f7- | tee $(tmp)/token
-	@echo
+	@grep argocd.token $(jar) | cut -f7- > $(tmp)/token
 
-	@echo Token payload:
-	(cut -d. -f2 < $(tmp)/token|tr -d '\n'; echo '===') | base64 -d | yq --input-format json
+	@echo Token:
+	@(cut -d. -f2 < $(tmp)/token|tr -d '\n'; echo '===') | base64 -d | yq --input-format json
 	@echo
 
 test-grafana:
-	-mkdir -p $(tmp)
-	-rm -f $(jar)
-	touch $(jar)
-	@echo
+	-@mkdir -p $(tmp)
+	-@rm -f $(jar)
+	@touch $(jar)
 
-	$(curl) -fsLo $(tmp)/login.html http://grafana.127.0.0.1.nip.io/login/generic_oauth
-	grep -o 'action="[^"]*"' < $(tmp)/login.html | cut -d\" -f2 | sed 's/&amp;/\&/g' > $(tmp)/path
-	@echo
+	@$(curl) -fsLo $(tmp)/login.html http://grafana.127.0.0.1.nip.io/login/generic_oauth
+	@grep -o 'action="[^"]*"' < $(tmp)/login.html | cut -d\" -f2 | sed 's/&amp;/\&/g' > $(tmp)/path
 
-	$(curl) -fsD $(tmp)/header.log -XPOST -d "login=alice&password=password123" "http://dex.127.0.0.1.nip.io$$(cat $(tmp)/path)"
-	grep ^Location $(tmp)/header.log | cut -d' ' -f2 | tr -d '\r' > $(tmp)/endpoint
-	@echo
+	@$(curl) -fsD $(tmp)/header.log -XPOST -d "login=alice&password=password123" "http://dex.127.0.0.1.nip.io$$(cat $(tmp)/path)"
+	@grep ^Location $(tmp)/header.log | cut -d' ' -f2 | tr -d '\r' > $(tmp)/endpoint
 
-	$(curl) -fso $(tmp)/more "$$(cat $(tmp)/endpoint)"
-	@echo
+	@$(curl) -fso $(tmp)/more "$$(cat $(tmp)/endpoint)"
 
 	@echo Session cookie:
 	@grep grafana_session $(jar) | grep -v expiry | cut -f7-
 	@echo
 
 	@echo User profile:
-	$(curl) -fsLo - http://grafana.127.0.0.1.nip.io/api/user | yq --input-format json
+	@$(curl) -fsLo - http://grafana.127.0.0.1.nip.io/api/user | yq --input-format json
 	@echo

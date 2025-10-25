@@ -5,7 +5,7 @@
 
 {{ with .Page.Resources.GetMatch $source }}
 <details>
-  <summary>{{ $summary }}</summary>
+  <summary style="font-size: 85%;">{{ $summary }}</summary>
   {{ highlight (trim .Content "\n\r") $language $options }}
 </details>
 {{ end }}

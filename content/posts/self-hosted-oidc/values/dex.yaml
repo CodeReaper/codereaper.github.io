@@ -30,7 +30,7 @@ config:
       id: glauth
       name: GLAuth
       config:
-        host: ldap.dex.svc:3893
+        host: ldap.auth.svc:3893
         insecureNoSSL: true
         bindDN: cn=bind,dc=glauth,dc=com
         bindPW: '{{ .Env.LDAP_PASSWORD }}'
