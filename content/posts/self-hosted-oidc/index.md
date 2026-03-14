@@ -70,9 +70,9 @@ _Note there would be issues with OIDC redirection and/or cookies, if we try to u
 
 Basically nip.io address always resolves to the ip address in its name:
 
-| Prefix | Dot | Address | Dot | Suffix |
-|---|---|---|---|---|
-|`anything.i.want`|`.`|`127.0.0.1`|`.`|`nip.io`|
+| Prefix            | Dot | Address     | Dot | Suffix   |
+| ----------------- | --- | ----------- | --- | -------- |
+| `anything.i.want` | `.` | `127.0.0.1` | `.` | `nip.io` |
 
 This means everything is served by the localhost which will work fine for your browser - _but inside the cluster using localhost will be an issue we need to tackle_.
 
@@ -94,7 +94,7 @@ We can do this by updating the `ConfigMap` named `coredns` in the `kube-system` 
 
 ## The Setup
 
-The authentication backend seems like a good starting point. 
+The authentication backend seems like a good starting point.
 
 ### Authentication
 
@@ -130,8 +130,6 @@ Note you can only assign a _single_ group to a user.
 
 #### GLAuth and Dex
 
-
-
 {{<code language="toml" source="manifests/secret-ldap.yaml" options="linenos=table,lineNoStart=1" lines="18-35">}}
 
 ---
@@ -155,26 +153,28 @@ Line 6
 Line 7
 : Combining all the generated secrets into a single `yaml` document
 
-The shared secrets/values are now prepared and tie 
+The shared secrets/values are now prepared and tie
 
 ### Dex
 
-
-
 DEX
+
 - issuer, connectors and staticClients
 - claims and groups - expand on ldap groups
 - clientSecrets
 
 LDAP
+
 - easy way with straight up secret of config with hashed passwords
-(one for argocd and one for grafana - to discuss connector to client strategy?)
+  (one for argocd and one for grafana - to discuss connector to client strategy?)
 
 ARGOCD
+
 - Configure connection with dex, including clientSecret
 - Show test from old post, including new group claim
 
 GRAFANA
+
 - Configure connection with dex, including clientSecret
 
 See:
