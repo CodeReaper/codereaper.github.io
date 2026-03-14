@@ -23,7 +23,7 @@ test-docker:
 	docker compose config -q
 
 test-editorcheck:
-	$(COMPOSE_RUN) tester ec
+	$(COMPOSE_RUN) tester ec -exclude '^\.git/|^public/|.DS_Store'
 
 test-github:
 	$(COMPOSE_RUN) tester make _test-github
