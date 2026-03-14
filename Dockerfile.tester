@@ -1,5 +1,0 @@
-FROM alpine:3.21
-
-RUN apk add --no-cache -q make editorconfig-checker check-jsonschema
-
-RUN mkdir -p /schemas && wget -qO /schemas/dependabot-2.0.json https://json.schemastore.org/dependabot-2.0.json

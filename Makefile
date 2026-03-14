@@ -1,45 +1,47 @@
-.PHONY: all test clean
+.PHONY: all test clean test-setup
 
 export DOCKER_CLI_HINTS=false
 
-COMPOSE_RUN = docker compose run --rm --quiet-pull
+DOCKER_RUN = docker run --rm -v $$(pwd):/workspace -w /workspace
 
 tests = $(shell grep -E '^test-.*:' Makefile | sed 's/:$$//')
 cleans = $(shell grep -E '^clean-.*:' Makefile | sed 's/:$$//')
 
-serve: clean-build
-	$(COMPOSE_RUN) --service-ports render
+serve: clean-public
+	docker run --rm -v $$(pwd):/src -w /src -p 127.0.0.1:1313:1313 hugomods/hugo:git hugo server --disableFastRender -DEF --bind 0.0.0.0 --poll 700ms
 
-build: clean-build test
-	$(COMPOSE_RUN) builder hugo --minify
+build: clean-public test
+	docker run --rm -v $$(pwd):/src -w /src hugomods/hugo:git hugo --minify
 
-test: $(tests)
+test: setup-tests $(tests)
+
+setup-tests: build/schemas/dependabot-2.0.json build/schemas/github-workflows.json
+
+build/schemas/dependabot-2.0.json:
+	mkdir -p build/schemas
+	curl -sLo build/schemas/dependabot-2.0.json https://www.schemastore.org/dependabot-2.0.json
+
+build/schemas/github-workflows.json:
+	mkdir -p build/schemas
+	curl -sLo build/schemas/github-workflows.json https://www.schemastore.org/github-workflow.json
 
 test-dependabot:
-	$(COMPOSE_RUN) tester check-jsonschema --schemafile /schemas/dependabot-2.0.json .github/dependabot.yml
-
-test-docker:
-	$(COMPOSE_RUN) dockerlint --ignore DL3018 Dockerfile.tester
-	docker compose config -q
+	$(DOCKER_RUN) ghcr.io/sourcemeta/jsonschema validate build/schemas/dependabot-2.0.json .github/dependabot.yml
 
 test-editorcheck:
-	$(COMPOSE_RUN) tester ec
+	$(DOCKER_RUN) mstruebing/editorconfig-checker ec -exclude '\.git/|public/|build/|.DS_Store' .
 
 test-github:
-	$(COMPOSE_RUN) tester make _test-github
-_test-github:
-	@find .github/workflows -type f \( -iname \*.yaml -o -iname \*.yml \) -print0 | xargs -0 -I {} echo 'echo Checking: {}; check-jsonschema --builtin-schema github-workflows {}' | sort | sh -e
-
-test-makefile:
-	$(COMPOSE_RUN) makelint
+	@find .github/workflows -type f \( -iname \*.yaml -o -iname \*.yml \) -print0 | \
+		xargs -0 -I {} echo 'echo Checking: {}; docker run --rm -v $$(pwd):/workspace -w /workspace ghcr.io/sourcemeta/jsonschema validate build/schemas/github-workflows.json {}' | \
+		sort | sh -e
 
 clean: $(cleans)
+	-rm -rf public
+	docker system prune -f
 
-clean-build:
-	-$(COMPOSE_RUN) builder rm -rf public
-
-clean-docker:
-	docker compose down --rmi all --remove-orphans
+clean-public:
+	-rm -rf public
 
 shell:
-	@$(COMPOSE_RUN) builder sh
+	docker run -it --rm -v $$(pwd):/src -w /src hugomods/hugo:git sh
