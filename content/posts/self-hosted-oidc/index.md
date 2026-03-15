@@ -155,7 +155,7 @@ This section goes through a setup to run the above OIDC setup in a local Kuberne
 The main components needed for this proof of concept are:
 
 - [Kind](https://kind.sigs.k8s.io) as a cluster stand-in
-- [Ingress nginx controller](https://kubernetes.github.io/ingress-nginx/) as a router of http traffic
+- [NGINX Gateway Fabric](https://github.com/nginx/nginx-gateway-fabric) as an ingress controller for http traffic
 - [Dex](https://dexidp.io) as a federated OIDC provider
 - [GLAuth](https://glauth.github.io) as an authentication backend
 - [Grafana](https://grafana.com/grafana/) as an OIDC-capable web applications
@@ -263,10 +263,10 @@ Token:
 iss: http://dex.127.0.0.1.nip.io
 sub: CgVhbGljZRIGZ2xhdXRo
 aud: argocd
-exp: 1.773685959e+09
-iat: 1.773599559e+09
-at_hash: Aq46PPeAiw2I_iXvPB0c3A
-c_hash: 3xXI86INUKK3jMjhVXy8uQ
+exp: 1.773689837e+09
+iat: 1.773603437e+09
+at_hash: TQaEW8Y06l6Ivrd60XUhyw
+c_hash: WzVpvw-SA7UV_AoKxLjoSw
 email: alice@example.com
 email_verified: true
 groups:
@@ -275,11 +275,11 @@ groups:
 name: alice
 
 Session cookie:
-f27980eb6c9c130e6a81022b4c9407ca
+88ee2a5587f828d9ae0470415e41729b
 
 User profile:
 id: 2
-uid: cfg46zgjm85j4a
+uid: ffg4cr1u6el1cd
 email: alice@example.com
 name: alice
 login: alice@example.com
@@ -292,8 +292,8 @@ isExternallySynced: true
 isGrafanaAdminExternallySynced: true
 authLabels:
   - Generic OAuth
-updatedAt: "2026-03-15T18:32:39Z"
-createdAt: "2026-03-15T18:32:39Z"
+updatedAt: "2026-03-15T19:37:18Z"
+createdAt: "2026-03-15T19:37:18Z"
 avatarUrl: /avatar/c160f8cc69a4f0bf2b0362752353d060
 isProvisioned: false
 ```

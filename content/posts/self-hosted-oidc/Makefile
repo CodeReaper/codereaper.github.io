@@ -18,13 +18,15 @@ clean: verify-deps
 
 setup: verify-deps configure create apply settle
 
-configure: build/secrets.yaml build/argocd-secrets.yaml build/cluster-applications.yaml build/dex build/argo-cd build/grafana
+configure: build/secrets.yaml build/argocd-secrets.yaml build/dex build/argo-cd build/grafana build/nginx-gateway-fabric
 	-rm -rf $(tmp)
 	-mkdir -p $(tmp)
 	helm template dex build/dex -n dex -f values/dex.yaml --create-namespace | yq '.metadata.namespace = "dex"' > $(tmp)/c.0
 	helm template argocd build/argo-cd -n argocd -f values/argocd.yaml --create-namespace > $(tmp)/c.1
 	helm template grafana build/grafana -n grafana -f values/grafana.yaml --create-namespace > $(tmp)/c.2
-	yq 'select(.kind == "CustomResourceDefinition")' $(tmp)/c.* > build/crd.yaml
+	helm template ngf build/nginx-gateway-fabric -n nginx-gateway -f values/nginx.yaml --create-namespace > $(tmp)/c.3
+	curl -fsL https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.5.1/standard-install.yaml > $(tmp)/c.4
+	yq 'select(.kind == "CustomResourceDefinition")' $(tmp)/c.* build/nginx-gateway-fabric/crds/*.yaml > build/crd.yaml
 	yq 'select(.kind and .kind != "CustomResourceDefinition")' $(tmp)/c.* manifests/*.yaml | \
 	sed s/is-replaced-with-ldap-hash/$$(yq '. | select(.metadata.name == "ldap") | .data.LDAP_PASSWORD' build/secrets.yaml | base64 -d | sha256)/ \
 	> build/applications.yaml
@@ -37,6 +39,9 @@ build/argo-cd:
 
 build/grafana:
 	helm pull grafana --version 11.3.2 --repo https://grafana-community.github.io/helm-charts --destination build --untar
+
+build/nginx-gateway-fabric:
+	helm pull --version 2.4.2 oci://ghcr.io/nginx/charts/nginx-gateway-fabric --destination build --untar
 
 build/secrets.yaml:
 	-rm -rf $(tmp)
@@ -56,24 +61,15 @@ build/argocd-secrets.yaml:
 		kubectl create secret generic --dry-run=client --output yaml --type=Opaque --from-literal "auth=$$REDIS" --namespace argocd argocd-redis > $(tmp)/a.3 && \
 	yq $(tmp)/a.* > build/argocd-secrets.yaml
 
-build/cluster-applications.yaml:
-	-rm -rf $(tmp)
-	-mkdir -p $(tmp)
-	curl -sfL https://raw.githubusercontent.com/kubernetes/ingress-nginx/helm-chart-4.11.2/deploy/static/provider/kind/deploy.yaml > $(tmp)/b.0
-	curl -sfL https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.8.0/components.yaml \
-		| yq 'with(select(.kind == "Deployment"); .spec.template.spec.containers[0].args += ["--kubelet-insecure-tls"])' > $(tmp)/b.1
-	yq $(tmp)/b.* > build/cluster-applications.yaml
-
 create:
 	kind -q create cluster --config kind.config --name $(cluster)
-	$(kubectl) create namespace ingress-nginx
+	$(kubectl) create namespace nginx-gateway
 	$(kubectl) create namespace dex
 	$(kubectl) create namespace argocd
 	$(kubectl) create namespace grafana
 	$(kubectl) create namespace auth
 	$(kubectl) apply --server-side -f build/crd.yaml
-	$(kubectl) apply --server-side -f build/cluster-applications.yaml
-	$(kubectl) rollout status -n ingress-nginx deployment
+	$(kubectl) rollout status -n nginx-gateway deployment
 
 apply:
 	$(kubectl) apply --server-side --force-conflicts --wait -f build/secrets.yaml

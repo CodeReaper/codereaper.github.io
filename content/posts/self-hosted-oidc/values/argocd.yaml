@@ -28,12 +28,6 @@ configs:
   secret:
     createSecret: false
 
-server:
-  ingress:
-    enabled: true
-    ingressClassName: nginx
-    hostname: argo.127.0.0.1.nip.io
-
 dex:
   enabled: false
 

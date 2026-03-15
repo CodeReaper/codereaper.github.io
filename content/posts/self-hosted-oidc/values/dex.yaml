@@ -51,15 +51,6 @@ config:
             - userAttr: uid
               groupAttr: memberUid
 
-ingress:
-  enabled: true
-  className: nginx
-  hosts:
-    - host: dex.127.0.0.1.nip.io
-      paths:
-        - path: /
-          pathType: Prefix
-
 service:
   ports:
     http:

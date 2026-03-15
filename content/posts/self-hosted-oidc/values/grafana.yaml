@@ -28,12 +28,6 @@ grafana.ini:
 admin:
   existingSecret: credentials
 
-ingress:
-  enabled: true
-  ingressClassName: nginx
-  hosts:
-    - grafana.127.0.0.1.nip.io
-
 sidecar:
   dashboards:
     enabled: false
