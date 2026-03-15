@@ -48,7 +48,7 @@ You can only assign a single group to a user, however you can configure groups t
 
 The following example for Alice makes her a member of both the admin group and the editor group.
 
-{{<code language="toml" source="manifests/secret-ldap.yaml" options="linenos=table,lineNoStart=1" lines="37-45,68-71,58-62">}}
+{{<code language="toml" source="manifests/secret-ldap.yaml" options="linenos=table,lineNoStart=1" lines="32-41,64-67,53-58">}}
 
 Line 4
 : This assigns Alice as a member of the admin group
@@ -63,15 +63,15 @@ Line 17
 
 The following configuration sets up the credentials Dex will use and defines the organization of the users.
 
-{{<code language="toml" source="manifests/secret-ldap.yaml" options="linenos=table,lineNoStart=1" lines="18-35">}}
+{{<code language="toml" source="manifests/secret-ldap.yaml" options="linenos=table,lineNoStart=1" lines="18-30">}}
 
 Line 3
 : Sets the organization elements
 
-Line 10-15
+Line 5-10
 : Define the service account for Dex
 
-Line 16-18
+Line 11-13
 : Grants the service account search privileges
 
 ## Dex
@@ -115,9 +115,11 @@ Any group memberships will result in tokens issued having a `groups` claim with 
 
 _Note_ - the `group` claim is only included if the OIDC login flow is started with `groups` as one of the requested scopes.
 
-## Explaining the use case
+## Securing an Application with OIDC Groups and RBAC
 
-The GLAuth/Dex setup we have discussed so far can be used to secure Argo CD including RBAC.
+The purpose of the GLAuth/Dex setup we have discussed so far can be used to secure an OIDC-capable application.
+
+Let us use it to secure Argo CD including RBAC as an example.
 
 The RBAC in Argo CD can use the groups claim from the OIDC token to make authorization decisions.
 
@@ -141,7 +143,7 @@ Argo CD uses OIDC groups for authorization. The RBAC configuration maps groups t
 Roles are assigned based on the groups claim:
 
 | Group Claim | Assigned Role | Logged in |
-| ----------- | ------------- | --------- |
+| :---------- | :------------ | :-------- |
 | editor      | admin         | Yes       |
 | viewer      | readonly      | Yes       |
 | (no match)  | (none)        | No        |
@@ -158,8 +160,8 @@ The main components needed for this proof of concept are:
 - [NGINX Gateway Fabric](https://github.com/nginx/nginx-gateway-fabric) as an ingress controller for http traffic
 - [Dex](https://dexidp.io) as a federated OIDC provider
 - [GLAuth](https://glauth.github.io) as an authentication backend
-- [Grafana](https://grafana.com/grafana/) as an OIDC-capable web applications
-- [Argo CD](https://argoproj.github.io/cd/) as an OIDC-capable web applications
+- [Grafana](https://grafana.com/grafana/) as an OIDC-capable web application
+- [Argo CD](https://argoproj.github.io/cd/) as an OIDC-capable web application
 
 This proof of concept is based on an earlier post about [debugging OIDC logins](https://codereaper.com/blog/2024/debugging-argo-cd-and-oidc-logins/).
 
@@ -220,7 +222,7 @@ _Note there would be issues with OIDC redirection and/or cookies, if we try to u
 A nip.io address always resolves to the ip address in its name:
 
 | Prefix            | Dot | Address     | Dot | Suffix   |
-| ----------------- | --- | ----------- | --- | -------- |
+| :---------------- | :-- | :---------- | :-- | :------- |
 | `anything.i.want` | `.` | `127.0.0.1` | `.` | `nip.io` |
 
 This means everything is served by the localhost which will work fine for your browser - _but inside the cluster using localhost will be an issue we need to tackle_.
@@ -297,3 +299,5 @@ createdAt: "2026-03-15T19:37:18Z"
 avatarUrl: /avatar/c160f8cc69a4f0bf2b0362752353d060
 isProvisioned: false
 ```
+
+The output demonstrates that we can successfully log in using an OIDC login flow for both sample applications.
