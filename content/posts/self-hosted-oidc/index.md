@@ -50,13 +50,11 @@ and one application only accessible from the inside of the cluster and only used
     |           +-->| Dex |<--->| GLAuth | |
     |          /     '---'       '------'  |
 .---------.   /                            |
-| Ingress .<-+         .-------.           |
-.---------.   \   +-->| Argo CD |          |
-    |          \ /     '-------'           |
-    |           +                          |
-    |            \     .-------.           |
-    |             +-->| Grafana |          |
-    |                  '-------'           |
+| Ingress .<-+                             |
+.---------.   \                            |
+    |          \     .--------.            |
+    |           +-->| OIDC App |           |
+    |                '--------'            |
     .--------------------------------------.
 ```
 
@@ -157,27 +155,98 @@ The shared secrets/values are now prepared and tie
 
 ### Dex
 
-DEX
+Dex is the heart of this setup - it bridges your applications with the LDAP backend and speaks OIDC to your applications. The configuration is split across the values/dex.yaml file and a couple of secrets.
 
-- issuer, connectors and staticClients
-- claims and groups - expand on ldap groups
-- clientSecrets
+The issuer URL is critical and must match what applications expect to see in OIDC tokens:
 
-LDAP
+{{<code language="yaml" source="values/dex.yaml" options="linenos=table,hl_lines=8" lines="8">}}
 
-- easy way with straight up secret of config with hashed passwords
-  (one for argocd and one for grafana - to discuss connector to client strategy?)
+This is the URL where Dex is accessible and what will appear as the iss claim in every token it issues.
 
-ARGOCD
+#### Connectors
 
-- Configure connection with dex, including clientSecret
-- Show test from old post, including new group claim
+Dex can federate with many backends - GitHub, Google, LDAP, SAML, etc. Here we're using the LDAP connector to talk to GLAuth:
 
-GRAFANA
+{{<code language="yaml" source="values/dex.yaml" options="linenos=table,hl_lines=28-52" lines="28-52">}}
 
-- Configure connection with dex, including clientSecret
+A few things to note:
 
-See:
-{{<code language="yaml" source="values/dex.yaml" options="linenos=table,hl_lines=12" lines="1">}}
+- insecureNoSSL: true because we're running without TLS in this proof-of-concept
+- The bindDN and bindPW are for Dex to authenticate against GLAuth as a service account (the "bind" user from the GLAuth config)
+- The userSearch section defines how Dex finds users - it will use the uid attribute as the username
+- The groupSearch section defines how Dex finds groups - the memberUid attribute on groups links back to users
+
+The group mapping is where things get interesting. In GLAuth, the "editor" group includes the "admin" group via includegroups, but Dex needs to actually see this relationship. The userMatchers connect users to groups through the memberUid attribute.
+
+#### Static Clients
+
+These are the applications that will use Dex for authentication:
+
+{{<code language="yaml" source="values/dex.yaml" options="linenos=table,hl_lines=10-20" lines="10-20">}}
+
+Each client has:
+
+- A unique id - this is what the application uses as its client_id
+- A name for the Dex UI
+- A secret (or secretEnv referencing an environment variable from a secret)
+- redirectURIs - Dex will only redirect to these URLs after authentication, preventing redirect attacks
+
+Both Argo CD and Grafana are configured as static clients with their respective redirect URIs matching their ingress URLs.
+
+### Argo CD
+
+Argo CD has built-in support for OIDC. The configuration lives in the values/argocd.yaml file:
+
+{{<code language="yaml" source="values/argocd.yaml" options="linenos=table,hl_lines=12-21" lines="12-21">}}
+
+The key parts:
+
+- issuer must match Dex's issuer URL exactly
+- clientID matches the static client ID we defined in Dex
+- clientSecret references the secret created by the Makefile
+- The requestedScopes include groups - this is critical for RBAC
+
+Argo CD uses OIDC groups for authorization. The RBAC configuration maps groups to roles:
+
+{{<code language="yaml" source="values/argocd.yaml" options="linenos=table,hl_lines=23-27" lines="23-27">}}
+
+This means anyone in the "editor" group gets admin access, and "viewer" gets read-only access.
+The test target in the Makefile validates this works:
+
+{{<code language="make" source="Makefile" options="linenos=table,hl_lines=91-108" lines="91-108">}}
+
+It performs a complete login flow: getting the login form, extracting the OIDC authorization path, posting credentials to Dex, and verifying the resulting token contains the expected claims.
+
+### Grafana
+
+Grafana also supports OIDC auth. The configuration in values/grafana.yaml is more verbose than Argo CD's:
+
+{{<code language="yaml" source="values/grafana.yaml" options="linenos=table,hl_lines=14-26" lines="14-26">}}
+
+The interesting part is the role_attribute_path:
+
+{{<code language="yaml" source="values/grafana.yaml" options="linenos=table,hl_lines=24" lines="24">}}
+
+This is a JMESPath expression that extracts the role from the OIDC token's groups claim. It checks:
+
+1. Is "admin" in the groups? → Give GrafanaAdmin role
+2. Is "editor" in the groups? → Give Editor role
+3. Otherwise → Give Viewer role
+
+The role_attribute_strict: true ensures users without a matching role can't get in at all.
+Grafana's test target verifies the login flow and checks the user profile endpoint to confirm the role was assigned correctly:
+
+{{<code language="make" source="Makefile" options="linenos=table,hl_lines=110-129" lines="110-129">}}
+
+## Running the setup
+
+With all the pieces in place, running make all from the project directory will:
+
+1. Create the Kind cluster
+2. Deploy the ingress controller
+3. Deploy GLAuth, Dex, Argo CD, and Grafana
+4. Run the integration tests against both Argo CD and Grafana
+
+The Makefile handles all the secret generation, so you don't need to manually create any passwords or client secrets. It generates random values, creates the appropriate Kubernetes secrets, and ensures everything is wired up correctly before running the tests.
 
 {{<collapsed-code summary="Show Makefile" language="make" source="Makefile">}}

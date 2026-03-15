@@ -16,7 +16,7 @@ clean: verify-deps
 	-find $(tmp) -delete -mindepth 1
 	-find build -not -name .gitignore -delete
 
-setup: verify-deps configure create apply
+setup: verify-deps configure create apply settle
 
 configure: build/secrets.yaml build/argocd-secrets.yaml build/cluster-applications.yaml build/dex build/argo-cd build/grafana
 	-rm -rf $(tmp)
@@ -127,3 +127,6 @@ test-grafana:
 	@echo User profile:
 	@$(curl) -fsLo - http://grafana.127.0.0.1.nip.io/api/user | yq --input-format json
 	@echo
+
+settle:
+	@sleep 10
