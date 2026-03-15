@@ -1,20 +1,167 @@
 ---
 title: Set up a self-hosted OIDC provider
-date: 2025-06-18T00:00:00+02:00
+date: 2026-03-15T00:00:00+02:00
 draft: false
 ---
 
-Let us go through how you can set up a OIDC provider in a kubernetes cluster. The main components we will use are:
+Let us go through how you can set up a OIDC provider in a kubernetes cluster. We will use:
+
+- [Dex](https://dexidp.io) as a federated OIDC provider
+- [GLAuth](https://glauth.github.io) as an authentication backend
+
+After going through the general setup we will set up a local [proof of concept](#proof-of-concept).
+
+## GLAuth
+
+GLAuth is an LDAP server that handles user and group management. We will configure it to function as a authentication backend for Dex.
+
+### Kubernetes manifests
+
+A helm chart does exist for [GLAuth](https://github.com/glauth/helm-glauth), but it does not suit our needs. We are configuring this application to use statically defined users and will therefore need a deployment, a service and a secret for its configuration.
+
+_Note_ - that the communication between Dex and GLAuth is LDAP, but should be LDAP over SSL in a production cluster.
+
+#### Service
+
+The service exposes port `3893` where we will communicate over LDAP.
+{{<collapsed-code summary="Show the service manifest" language="yaml" source="manifests/svc-ldap.yaml" options="linenos=table">}}
+
+#### Deployment
+
+The deployment is a very locked-down single replica with rolling updates of GLAuth in version 2.4.0 that mounts and uses the following secret as its configuration.
+{{<collapsed-code summary="Show the deployment manifest" language="yaml" source="manifests/deploy-ldap.yaml" options="linenos=table">}}
+
+#### Secret
+
+The secret contains all the configuration of GLAuth which we will need to dive a little deeper into in the next section.
+{{<collapsed-code summary="Show the secret manifest" language="yaml" source="manifests/secret-ldap.yaml" options="linenos=table">}}
+
+### Configuration
+
+The configuration consists of two parts, one for defining the statically defined users and groups and one for defining how to connect with the server.
+
+#### Users and Groups
+
+You can configure users and groups where a user can be a member of multiple groups, but this does come with some weirdness.
+
+The following example for Alice makes her a member of both the admin group and the editor group.
+
+{{<code language="toml" source="manifests/secret-ldap.yaml" options="linenos=table,lineNoStart=1" lines="37-45,68-71,58-62">}}
+
+Line 4
+: This assigns Alice as a member of the admin group
+
+Line 12
+: The admin group is number 5003
+
+Line 17
+: The editor group is assigned to everyone in the number 5003 group
+
+_Note_ - you can only assign a _single_ group to a user.
+
+#### Connections and queries
+
+The following configuration sets up the credentials Dex will use and defines the organization of the users.
+
+{{<code language="toml" source="manifests/secret-ldap.yaml" options="linenos=table,lineNoStart=1" lines="18-35">}}
+
+Line 3
+: Sets the organization elements
+
+Line 10-15
+: Define the service account for Dex
+
+Line 16-18
+: Grants the service account search privileges
+
+## Dex
+
+Dex can federate with [many backends](https://dexidp.io/docs/connectors/) - GitHub, Google, LDAP, SAML, etc.
+
+We are using the LDAP connector to talk to GLAuth.
+
+### Configuration
+
+The following configuration for Dex defines a bind user to connect to the LDAP with and configuration on how to perform user and group queries.
+
+{{<code language="yaml" source="values/dex.yaml" options="linenos=table" lines="28-52">}}
+
+Line 8-9
+: Sets credentials for the service account
+
+Line 11-17
+: Define user queries that uses `uid` as username
+
+Line 19-25
+: Define group queries that uses `memberUid` to resolve groups
+
+### Static Clients
+
+Static clients are applications that will use Dex for authentication. Each client must be registered with Dex to allow the OIDC authorization flow.
+
+{{<code language="yaml" source="values/dex.yaml" options="linenos=table" lines="10-15">}}
+
+Each client has:
+
+- A unique id - this is what the application uses as its `client_id`
+- A name for the Dex UI
+- A secret (or secretEnv referencing an environment variable from a secret)
+- redirectURIs - Dex will only redirect to these URLs after authentication.
+
+### Groups
+
+The group membership defined for the users in GLAuth can be queried by Dex using the `groupSearch`.
+Any group memberships will result in tokens issued having a `groups` claim with the names of each group.
+
+_Note_ - the `group` claim is only include if the OIDC login flow is started with `groups` as one of the requested scopes.
+
+## Explaining the use case
+
+The GLAuth/Dex setup we have discussed so far can be used to secure Argo CD including RBAC.
+
+The RBAC in Argo CD can use the groups claim from the OIDC token to make authorization decisions.
+
+Argo CD has built-in support for OIDC and can be configured like the following:
+
+{{<code language="yaml" source="values/argocd.yaml" options="linenos=table" lines="12-21">}}
+
+The key parts:
+
+- `issuer` must match the issuer URL from Dex exactly
+- `clientID` matches the static client ID we defined in Dex
+- `clientSecret` matches the same secret value as the static client
+- The `requestedScopes` include `groups` - this is critical for RBAC
+
+Argo CD uses OIDC groups for authorization. The RBAC configuration maps groups to roles:
+
+{{<code language="yaml" source="values/argocd.yaml" options="linenos=table" lines="23-27">}}
+
+Roles are assigned based on the groups claim:
+
+| Group Claim | Assigned Role | Logged in |
+| ----------- | ------------- | --------- |
+| editor      | admin         | Yes       |
+| viewer      | readonly      | Yes       |
+| (no match)  | (none)        | No        |
+
+## Proof of Concept
+
+This section goes through a setup to run the above OIDC setup in a local Kubernetes cluster using Kind.
+
+### Overview
+
+The main components needed for this proof of concept are:
 
 - [Kind](https://kind.sigs.k8s.io) as a cluster stand-in
 - [Ingress nginx controller](https://kubernetes.github.io/ingress-nginx/) as a router of http traffic
 - [Dex](https://dexidp.io) as a federated OIDC provider
 - [GLAuth](https://glauth.github.io) as an authentication backend
-- [Grafana](https://grafana.com/grafana/) and [Argo CD](https://argoproj.github.io/cd/) as OIDC-capable web applications
+- [Grafana](https://grafana.com/grafana/) as a OIDC-capable web applications
+- [Argo CD](https://argoproj.github.io/cd/) as a OIDC-capable web applications
 
-You can skip ahead a little to [The Setup](#the-setup), otherwise the next few sections will explain certain caveats and workarounds related to running the setup as a proof of concept locally.
+This proof of concept is based on an earlier post about [debugging OIDC logins](https://codereaper.com/blog/2024/debugging-argo-cd-and-oidc-logins/).
 
-## The Kubernetes Cluster
+### The Kubernetes Cluster
 
 The first two components on the list are Kind and the ingress controller. They are both nothing special in this set up.
 
@@ -25,7 +172,7 @@ The ingress controller is a piece of required software for a kubernetes cluster 
 
 These two component enables the cluster to host HTTP applications - _and technically more, but again, this is irrelevant for our set up_.
 
-## Network
+### Network
 
 We are taking certain shortcuts in regards to the network setup like securing it with HTTPS/SSL for a few reasons:
 
@@ -39,7 +186,7 @@ Notably we are also skipping setting up SSL connections between applications in 
 
 ### Application Network
 
-The applications - _that we are going to discuss more in a bit_ - will have three web applications accessible through the ingress controller
+The applications will have three web applications accessible through the ingress controller
 and one application only accessible from the inside of the cluster and only used directly by Dex.
 
 ```goat
@@ -50,11 +197,13 @@ and one application only accessible from the inside of the cluster and only used
     |           +-->| Dex |<--->| GLAuth | |
     |          /     '---'       '------'  |
 .---------.   /                            |
-| Ingress .<-+                             |
-.---------.   \                            |
-    |          \     .--------.            |
-    |           +-->| OIDC App |           |
-    |                '--------'            |
+| Ingress .<-+         .-------.           |
+.---------.   \   +-->| Argo CD |          |
+    |          \ /     '-------'           |
+    |           +                          |
+    |            \     .-------.           |
+    |             +-->| Grafana |          |
+    |                  '-------'           |
     .--------------------------------------.
 ```
 
@@ -90,163 +239,58 @@ We can do this by updating the `ConfigMap` named `coredns` in the `kube-system` 
 
 {{<collapsed-code summary="Show the ConfigMap" language="yaml" source="manifests/coredns.yaml" options="linenos=table,hl_lines=14">}}
 
-## The Setup
-
-The authentication backend seems like a good starting point.
-
-### Authentication
-
-Authentication will be handled by GLAuth and we will need a deployment, a service and a secret for its configuration.
-
-The service exposes port `3893` where we will communicate over LDAP.
-{{<collapsed-code summary="Show the service manifest" language="yaml" source="manifests/svc-ldap.yaml" options="linenos=table">}}
-
-The deployment is a very locked-down single replica of GLAuth in version 2.4.0.
-{{<collapsed-code summary="Show the deployment manifest" language="yaml" source="manifests/deploy-ldap.yaml" options="linenos=table">}}
-
-The secret contains all the configuration of GLAuth which we will need to dive a little deeper into in the next sections.
-{{<collapsed-code summary="Show the secret manifest" language="yaml" source="manifests/secret-ldap.yaml" options="linenos=table">}}
-
-#### GLAuth and Groups
-
-You can configure users and groups where a user can be a member of multiple groups, but this does come with some weirdness.
-
-The following example for Alice makes her a member of both the admin group and the editor group.
-
-{{<code language="toml" source="manifests/secret-ldap.yaml" options="linenos=table,lineNoStart=1" lines="37-45,68-71,58-62">}}
-
-Line 4
-: This assigns Alice as a member of the admin group
-
-Line 12
-: The admin group is number 5003
-
-Line 17
-: The editor group is assigned to everyone in the number 5003 group
-
-Note you can only assign a _single_ group to a user.
-
-#### GLAuth and Dex
-
-{{<code language="toml" source="manifests/secret-ldap.yaml" options="linenos=table,lineNoStart=1" lines="18-35">}}
-
----
-
-As a first step we will generate the secrets we are going to need for passwords and client secrets.
-
-{{<code language="make" source="Makefile" options="linenos=table,hl_lines=12" lines="41,44-49">}}
-
-Line 2
-: Generating random values
-
-Line 3
-: Generating secret for Dex containing both client secrets
-
-Line 4-5
-: Generating secret for Argo CD and Grafana
-
-Line 6
-: Generating secret containing the password for our LDAP service account
-
-Line 7
-: Combining all the generated secrets into a single `yaml` document
-
-The shared secrets/values are now prepared and tie
-
-### Dex
-
-Dex is the heart of this setup - it bridges your applications with the LDAP backend and speaks OIDC to your applications. The configuration is split across the values/dex.yaml file and a couple of secrets.
-
-The issuer URL is critical and must match what applications expect to see in OIDC tokens:
-
-{{<code language="yaml" source="values/dex.yaml" options="linenos=table,hl_lines=8" lines="8">}}
-
-This is the URL where Dex is accessible and what will appear as the iss claim in every token it issues.
-
-#### Connectors
-
-Dex can federate with many backends - GitHub, Google, LDAP, SAML, etc. Here we're using the LDAP connector to talk to GLAuth:
-
-{{<code language="yaml" source="values/dex.yaml" options="linenos=table,hl_lines=28-52" lines="28-52">}}
-
-A few things to note:
-
-- insecureNoSSL: true because we're running without TLS in this proof-of-concept
-- The bindDN and bindPW are for Dex to authenticate against GLAuth as a service account (the "bind" user from the GLAuth config)
-- The userSearch section defines how Dex finds users - it will use the uid attribute as the username
-- The groupSearch section defines how Dex finds groups - the memberUid attribute on groups links back to users
-
-The group mapping is where things get interesting. In GLAuth, the "editor" group includes the "admin" group via includegroups, but Dex needs to actually see this relationship. The userMatchers connect users to groups through the memberUid attribute.
-
-#### Static Clients
-
-These are the applications that will use Dex for authentication:
-
-{{<code language="yaml" source="values/dex.yaml" options="linenos=table,hl_lines=10-20" lines="10-20">}}
-
-Each client has:
-
-- A unique id - this is what the application uses as its client_id
-- A name for the Dex UI
-- A secret (or secretEnv referencing an environment variable from a secret)
-- redirectURIs - Dex will only redirect to these URLs after authentication, preventing redirect attacks
-
-Both Argo CD and Grafana are configured as static clients with their respective redirect URIs matching their ingress URLs.
-
-### Argo CD
-
-Argo CD has built-in support for OIDC. The configuration lives in the values/argocd.yaml file:
-
-{{<code language="yaml" source="values/argocd.yaml" options="linenos=table,hl_lines=12-21" lines="12-21">}}
-
-The key parts:
-
-- issuer must match Dex's issuer URL exactly
-- clientID matches the static client ID we defined in Dex
-- clientSecret references the secret created by the Makefile
-- The requestedScopes include groups - this is critical for RBAC
-
-Argo CD uses OIDC groups for authorization. The RBAC configuration maps groups to roles:
-
-{{<code language="yaml" source="values/argocd.yaml" options="linenos=table,hl_lines=23-27" lines="23-27">}}
-
-This means anyone in the "editor" group gets admin access, and "viewer" gets read-only access.
-The test target in the Makefile validates this works:
-
-{{<code language="make" source="Makefile" options="linenos=table,hl_lines=91-108" lines="91-108">}}
-
-It performs a complete login flow: getting the login form, extracting the OIDC authorization path, posting credentials to Dex, and verifying the resulting token contains the expected claims.
-
-### Grafana
-
-Grafana also supports OIDC auth. The configuration in values/grafana.yaml is more verbose than Argo CD's:
-
-{{<code language="yaml" source="values/grafana.yaml" options="linenos=table,hl_lines=14-26" lines="14-26">}}
-
-The interesting part is the role_attribute_path:
-
-{{<code language="yaml" source="values/grafana.yaml" options="linenos=table,hl_lines=24" lines="24">}}
-
-This is a JMESPath expression that extracts the role from the OIDC token's groups claim. It checks:
-
-1. Is "admin" in the groups? → Give GrafanaAdmin role
-2. Is "editor" in the groups? → Give Editor role
-3. Otherwise → Give Viewer role
-
-The role_attribute_strict: true ensures users without a matching role can't get in at all.
-Grafana's test target verifies the login flow and checks the user profile endpoint to confirm the role was assigned correctly:
-
-{{<code language="make" source="Makefile" options="linenos=table,hl_lines=110-129" lines="110-129">}}
-
-## Running the setup
-
-With all the pieces in place, running make all from the project directory will:
-
-1. Create the Kind cluster
-2. Deploy the ingress controller
-3. Deploy GLAuth, Dex, Argo CD, and Grafana
-4. Run the integration tests against both Argo CD and Grafana
-
-The Makefile handles all the secret generation, so you don't need to manually create any passwords or client secrets. It generates random values, creates the appropriate Kubernetes secrets, and ensures everything is wired up correctly before running the tests.
+### Running the proof
+
+The make file will:
+
+- Create a kind cluster
+- Configure network workaround
+- Configure applications
+- Perform OIDC logins
+- Display claims from token
 
 {{<collapsed-code summary="Show Makefile" language="make" source="Makefile">}}
+
+#### Output
+
+The final output from a run (which takes a few minutes) looks like:
+
+```sh
+Token:
+iss: http://dex.127.0.0.1.nip.io
+sub: CgVhbGljZRIGZ2xhdXRo
+aud: argocd
+exp: 1.773670002e+09
+iat: 1.773583602e+09
+at_hash: uu0Tvh5VS-UOYaVkcxfJvA
+c_hash: 3EaUb_yGnNMwiEwj15E5GQ
+email: alice@example.com
+email_verified: true
+groups:
+  - editor
+  - admin
+name: alice
+
+Session cookie:
+4065cf6c40ad42564c144accda2fd8c4
+
+User profile:
+id: 2
+uid: bfg3j9dnxmku8f
+email: alice@example.com
+name: alice
+login: alice@example.com
+theme: ""
+orgId: 1
+isGrafanaAdmin: true
+isDisabled: false
+isExternal: true
+isExternallySynced: true
+isGrafanaAdminExternallySynced: true
+authLabels:
+  - Generic OAuth
+updatedAt: "2026-03-15T14:06:42Z"
+createdAt: "2026-03-15T14:06:42Z"
+avatarUrl: /avatar/c160f8cc69a4f0bf2b0362752353d060
+isProvisioned: false
+```
