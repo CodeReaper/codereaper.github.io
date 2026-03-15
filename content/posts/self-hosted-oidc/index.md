@@ -123,7 +123,7 @@ The RBAC in Argo CD can use the groups claim from the OIDC token to make authori
 
 Argo CD has built-in support for OIDC and can be configured like the following:
 
-{{<code language="yaml" source="values/argocd.yaml" options="linenos=table" lines="12-21">}}
+{{<code language="yaml" source="values/argocd.yaml" options="linenos=table" lines="10-11,14-20">}}
 
 The key parts:
 
@@ -132,9 +132,11 @@ The key parts:
 - `clientSecret` matches the same secret value as the static client
 - The `requestedScopes` include `groups` - this is critical for RBAC
 
+_Note_ - current version of Argo CD has a [bug related to referenced secrets](https://github.com/argoproj/argo-cd/issues/26269), that made it necessary to place the client secret in directly argocd-secret.
+
 Argo CD uses OIDC groups for authorization. The RBAC configuration maps groups to roles:
 
-{{<code language="yaml" source="values/argocd.yaml" options="linenos=table" lines="23-27">}}
+{{<code language="yaml" source="values/argocd.yaml" options="linenos=table" lines="20-27">}}
 
 Roles are assigned based on the groups claim:
 
@@ -247,7 +249,8 @@ The make file will:
 - Configure network workaround
 - Configure applications
 - Perform OIDC logins
-- Display claims from token
+- Display claims from token from Argo CD
+- Display user profile from Grafana
 
 {{<collapsed-code summary="Show Makefile" language="make" source="Makefile">}}
 
@@ -260,10 +263,10 @@ Token:
 iss: http://dex.127.0.0.1.nip.io
 sub: CgVhbGljZRIGZ2xhdXRo
 aud: argocd
-exp: 1.773670002e+09
-iat: 1.773583602e+09
-at_hash: uu0Tvh5VS-UOYaVkcxfJvA
-c_hash: 3EaUb_yGnNMwiEwj15E5GQ
+exp: 1.773685959e+09
+iat: 1.773599559e+09
+at_hash: Aq46PPeAiw2I_iXvPB0c3A
+c_hash: 3xXI86INUKK3jMjhVXy8uQ
 email: alice@example.com
 email_verified: true
 groups:
@@ -272,11 +275,11 @@ groups:
 name: alice
 
 Session cookie:
-4065cf6c40ad42564c144accda2fd8c4
+f27980eb6c9c130e6a81022b4c9407ca
 
 User profile:
 id: 2
-uid: bfg3j9dnxmku8f
+uid: cfg46zgjm85j4a
 email: alice@example.com
 name: alice
 login: alice@example.com
@@ -289,8 +292,8 @@ isExternallySynced: true
 isGrafanaAdminExternallySynced: true
 authLabels:
   - Generic OAuth
-updatedAt: "2026-03-15T14:06:42Z"
-createdAt: "2026-03-15T14:06:42Z"
+updatedAt: "2026-03-15T18:32:39Z"
+createdAt: "2026-03-15T18:32:39Z"
 avatarUrl: /avatar/c160f8cc69a4f0bf2b0362752353d060
 isProvisioned: false
 ```

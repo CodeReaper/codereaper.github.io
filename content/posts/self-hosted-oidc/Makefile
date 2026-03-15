@@ -30,13 +30,13 @@ configure: build/secrets.yaml build/argocd-secrets.yaml build/cluster-applicatio
 	> build/applications.yaml
 
 build/dex:
-	helm pull dex --version 0.19.1 --repo https://charts.dexidp.io --destination build --untar
+	helm pull dex --version 0.24.0 --repo https://charts.dexidp.io --destination build --untar
 
 build/argo-cd:
-	helm pull argo-cd --version 7.8.15 --repo https://argoproj.github.io/argo-helm --destination build --untar
+	helm pull argo-cd --version 9.4.10 --repo https://argoproj.github.io/argo-helm --destination build --untar
 
 build/grafana:
-	helm pull grafana --version 9.2.10 --repo https://grafana.github.io/helm-charts --destination build --untar
+	helm pull grafana --version 11.3.2 --repo https://grafana-community.github.io/helm-charts --destination build --untar
 
 build/secrets.yaml:
 	-rm -rf $(tmp)
@@ -44,7 +44,7 @@ build/secrets.yaml:
 	export ARGOCD=$$(openssl rand -hex 20) GRAFANA=$$(openssl rand -hex 20) LDAP=$$(openssl rand -hex 20) && \
 		kubectl create secret generic --dry-run=client --output yaml --type=Opaque --from-literal "ARGO_CD_CLIENT_SECRET=$$ARGOCD" --from-literal "GRAFANA_CLIENT_SECRET=$$GRAFANA" --namespace dex client-secrets > $(tmp)/a.0 && \
 		kubectl create secret generic --dry-run=client --output yaml --type=Opaque --from-literal "CLIENT_SECRET=$$GRAFANA" --namespace grafana client-secret > $(tmp)/a.1 && \
-		kubectl create secret generic --dry-run=client --output yaml --type=Opaque --from-literal "CLIENT_SECRET=$$ARGOCD" --namespace argocd client-secret | yq '.metadata.labels."app.kubernetes.io/part-of" = "argocd"' > $(tmp)/a.4 && \
+		kubectl create secret generic --dry-run=client --output yaml --type=Opaque --from-literal "CLIENT_SECRET=$$ARGOCD" --from-literal "server.secretkey=$$(openssl rand -base64 32)" --namespace argocd argocd-secret | yq '.metadata.labels."app.kubernetes.io/part-of" = "argocd"' > $(tmp)/a.4 && \
 		kubectl create secret generic --dry-run=client --output yaml --type=Opaque --from-literal "LDAP_PASSWORD=$$LDAP" --namespace dex ldap > $(tmp)/a.5 && \
 	yq $(tmp)/a.* > build/secrets.yaml
 
@@ -71,8 +71,8 @@ create:
 	$(kubectl) create namespace argocd
 	$(kubectl) create namespace grafana
 	$(kubectl) create namespace auth
-	$(kubectl) apply -f build/crd.yaml
-	$(kubectl) apply -f build/cluster-applications.yaml
+	$(kubectl) apply --server-side -f build/crd.yaml
+	$(kubectl) apply --server-side -f build/cluster-applications.yaml
 	$(kubectl) rollout status -n ingress-nginx deployment
 
 apply:
@@ -129,4 +129,4 @@ test-grafana:
 	@echo
 
 settle:
-	@sleep 10
+	@sleep 20
