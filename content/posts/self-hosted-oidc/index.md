@@ -90,7 +90,7 @@ Line 8-9
 : Sets credentials for the service account
 
 Line 11-17
-: Define user queries that uses `uid` as username
+: Define user queries that use `uid` as username
 
 Line 19-25
 : Define group queries that use `memberUid` to resolve groups
@@ -104,7 +104,7 @@ Static clients are applications that will use Dex for authentication. Each clien
 Each client has:
 
 - A unique id - this is what the application uses as its `client_id`
-- A name for the Dex UI
+- A name to use in the Dex UI
 - A secret (or secretEnv referencing an environment variable from a secret)
 - redirectURIs - Dex will only redirect to these URLs after authentication.
 
@@ -134,7 +134,7 @@ The key parts:
 - `clientSecret` matches the same secret value as the static client
 - The `requestedScopes` include `groups` - this is critical for RBAC
 
-_Note_ - current version of Argo CD has a [bug related to referenced secrets](https://github.com/argoproj/argo-cd/issues/26269), that made it necessary to place the client secret in directly argocd-secret.
+_Note_ - current version of Argo CD has a [bug related to referenced secrets](https://github.com/argoproj/argo-cd/issues/26269), that made it necessary to place the client secret directly in argocd-secret.
 
 Argo CD uses OIDC groups for authorization. The RBAC configuration maps groups to roles:
 
@@ -150,7 +150,7 @@ Roles are assigned based on the groups claim:
 
 ## Proof of Concept
 
-This section goes through a setup to run the above OIDC setup in a local Kubernetes cluster using Kind.
+This section goes through running the above OIDC setup in a local Kubernetes cluster using Kind.
 
 ### Overview
 
@@ -172,9 +172,9 @@ The first two components on the list are Kind and the ingress controller. They a
 Kind is a simple way to have a local cluster for testing purposes which means you can likely test this yourself on your own machine.
 Kind brings along the actual kubernetes applications like api server, scheduler, dns server etc.
 
-An ingress controller is required software for a kubernetes cluster to route network traffic behind the outside of the cluster to the inside of the cluster.
+An ingress controller is required software for a kubernetes cluster to route external traffic into the cluster.
 
-These two components enable the cluster to host HTTP applications - _and technically more, but again, this is irrelevant for our set up_.
+These two components enable the cluster to host HTTP applications - _and technically more, but again, this is irrelevant for our setup_.
 
 ### Network
 
@@ -211,7 +211,7 @@ and one application only accessible from the inside of the cluster and only used
     .--------------------------------------.
 ```
 
-We could assign a port number to each web application serve them as `http://127.0.0.1:8080`, etc., but [nip.io](https://nip.io) is a better option and allows us to use these addresses instead:
+We could assign a port number to each web application to serve them as `http://127.0.0.1:8080`, etc., but [nip.io](https://nip.io) is a better option and allows us to use these addresses instead:
 
 - `http://dex.127.0.0.1.nip.io`
 - `http://argocd.127.0.0.1.nip.io`
@@ -219,7 +219,7 @@ We could assign a port number to each web application serve them as `http://127.
 
 _Note there would be issues with OIDC redirection and/or cookies, if we try to use the one application per port approach_.
 
-A nip.io address always resolves to the ip address in its name:
+A nip.io address always resolves to the IP address in its name:
 
 | Prefix            | Dot | Address     | Dot | Suffix   |
 | :---------------- | :-- | :---------- | :-- | :------- |
