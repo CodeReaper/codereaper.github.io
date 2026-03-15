@@ -1,0 +1,83 @@
+envFrom:
+  - secretRef:
+      name: client-secrets
+  - secretRef:
+      name: ldap
+
+config:
+  issuer: http://dex.127.0.0.1.nip.io
+
+  staticClients:
+    - id: argocd
+      name: ArgoCD
+      secretEnv: ARGO_CD_CLIENT_SECRET
+      redirectURIs:
+        - http://argo.127.0.0.1.nip.io/auth/callback
+    - id: grafana
+      name: Grafana
+      secretEnv: GRAFANA_CLIENT_SECRET
+      redirectURIs:
+        - http://grafana.127.0.0.1.nip.io/login/generic_oauth
+
+  oauth2:
+    skipApprovalScreen: true
+
+  storage:
+    type: memory
+
+  connectors:
+    - type: ldap
+      id: glauth
+      name: GLAuth
+      config:
+        host: ldap.auth.svc:3893
+        insecureNoSSL: true
+        bindDN: cn=bind,dc=glauth,dc=com
+        bindPW: '{{ .Env.LDAP_PASSWORD }}'
+
+        userSearch:
+          baseDN: 'dc=glauth,dc=com'
+          filter: '(objectClass=*)'
+          username: 'uid'
+          idAttr: 'uid'
+          emailAttr: 'mail'
+          nameAttr: 'uid'
+
+        groupSearch:
+          baseDN: 'ou=users,dc=glauth,dc=com'
+          filter: '(objectClass=*)'
+          nameAttr: 'ou'
+          userMatchers:
+            - userAttr: uid
+              groupAttr: memberUid
+
+service:
+  ports:
+    http:
+      port: 80
+
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxSurge: 1
+    maxUnavailable: 0
+
+revisionHistoryLimit: 0
+
+volumes:
+  - name: tmp
+    emptyDir:
+      sizeLimit: 10Mi
+
+volumeMounts:
+  - name: tmp
+    mountPath: /tmp
+
+securityContext:
+  capabilities:
+    drop:
+      - ALL
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 1001

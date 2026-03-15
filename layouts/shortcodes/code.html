@@ -1,7 +1,56 @@
-{{ $language := .Get "language" }}
-{{ $source := .Get "source" }}
-{{ $options := .Get "options" }}
+{{- $language := .Get "language" -}}
+{{- $source   := .Get "source" -}}
+{{- $options  := .Get "options" | default "" -}}
+{{- $spec     := .Get "lines"   | default "" -}}
 
 {{ with .Page.Resources.GetMatch $source }}
-  {{ highlight (trim .Content "\n\r") $language $options }}
+  {{- $lines := split (trim .Content "\n\r") "\n" -}}
+  {{- $total := len $lines -}}
+
+  {{- $includeAll := eq $spec "" -}}
+  {{- $output := "" -}}
+
+  {{- if $includeAll }}
+    {{- $output = delimit $lines "\n" -}}
+  {{- else }}
+    {{- $parts := split $spec "," -}}
+    {{- range $p := $parts }}
+      {{- $part := trim $p " " -}}
+      {{- if in $part "-" }}
+        {{- $bounds := split $part "-" -}}
+        {{- $start := int (index $bounds 0) -}}
+        {{- $end := int (index $bounds 1) -}}
+
+        {{- if lt $end $start }}
+          {{- $tmp := $start }}
+          {{- $start = $end }}
+          {{- $end = $tmp }}
+        {{- end }}
+
+        {{- if lt $start 1 }}{{ $start = 1 }}{{ end -}}
+        {{- if gt $end $total }}{{ $end = $total }}{{ end -}}
+
+        {{- range seq $start $end }}
+          {{- $line := index $lines (sub . 1) -}}
+          {{- if eq $output "" }}
+            {{- $output = $line -}}
+          {{- else }}
+            {{- $output = printf "%s\n%s" $output $line -}}
+          {{- end }}
+        {{- end }}
+      {{- else }}
+        {{- $n := int $part -}}
+        {{- if and (gt $n 0) (le $n $total) }}
+          {{- $line := index $lines (sub $n 1) -}}
+          {{- if eq $output "" }}
+            {{- $output = $line -}}
+          {{- else }}
+            {{- $output = printf "%s\n%s" $output $line -}}
+          {{- end }}
+        {{- end }}
+      {{- end }}
+    {{- end }}
+  {{- end }}
+
+  {{- highlight (trim $output "\n\r") $language $options -}}
 {{ end }}

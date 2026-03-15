@@ -1,0 +1,35 @@
+global:
+  logging:
+    level: debug
+
+configs:
+  params:
+    create: true
+    server.insecure: true
+
+  cm:
+    create: true
+    url: http://argo.127.0.0.1.nip.io
+    admin.enabled: false
+    oidc.config: |
+      name: Dex
+      issuer: http://dex.127.0.0.1.nip.io
+      clientID: argocd
+      clientSecret: $argocd-secret:CLIENT_SECRET
+      requestedScopes: ["openid", "profile", "email", "groups"]
+
+  rbac:
+    create: true
+    policy.default: role:none
+    policy.csv: |
+      g, editor, role:admin
+      g, viewer, role:readonly
+
+  secret:
+    createSecret: false
+
+dex:
+  enabled: false
+
+redisSecretInit:
+  enabled: false

@@ -118,6 +118,19 @@ brew services start colima
 sudo ln -sf $HOME/.colima/default/docker.sock /var/run/docker.sock
 ```
 
+... or something more permanent in your dot files with greater flexibility:
+
+```sh
+if command -v colima &>/dev/null; then
+    export DOCKER_HOST="unix://${HOME}/.colima/default/docker.sock"
+    export TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE="${HOME}/.colima/default/docker.sock"
+fi
+
+brew upgrade colima
+colima update
+
+```
+
 ### Handling Updates
 
 Without update nagging from any desktop application, it is up to yourself to stay up-to-date. This was always the case if you had anything else installed via `brew`.

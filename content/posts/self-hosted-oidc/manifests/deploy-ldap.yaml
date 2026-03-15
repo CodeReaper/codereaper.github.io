@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ldap
+  namespace: auth
+spec:
+  replicas: 1
+  revisionHistoryLimit: 0
+  minReadySeconds: 0
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: ldap
+  template:
+    metadata:
+      labels:
+        app: ldap
+    spec:
+      terminationGracePeriodSeconds: 30
+      automountServiceAccountToken: false
+      containers:
+        - name: ldap
+          image: glauth/glauth:v2.4.0
+          resources:
+            limits:
+              cpu: 10m
+              memory: 12Mi
+            requests:
+              cpu: 5m
+              memory: 12Mi
+          ports:
+            - name: ldap
+              containerPort: 3893
+          startupProbe:
+            tcpSocket:
+              port: ldap
+            failureThreshold: 30
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: ldap
+            failureThreshold: 1
+            periodSeconds: 10
+          securityContext:
+            capabilities:
+              drop:
+                - ALL
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 9001
+          volumeMounts:
+            - name: ldap
+              mountPath: /app/config/config.cfg
+              subPath: ldap.cfg
+      volumes:
+        - name: ldap
+          secret:
+            secretName: ldap-config
