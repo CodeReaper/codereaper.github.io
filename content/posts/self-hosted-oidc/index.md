@@ -4,7 +4,7 @@ date: 2026-03-15T00:00:00+02:00
 draft: false
 ---
 
-Let us go through how you can set up a OIDC provider in a kubernetes cluster. We will use:
+Let us go through how you can set up an OIDC provider in a kubernetes cluster. We will use:
 
 - [Dex](https://dexidp.io) as a federated OIDC provider
 - [GLAuth](https://glauth.github.io) as an authentication backend
@@ -19,7 +19,7 @@ GLAuth is an LDAP server that handles user and group management. We will configu
 
 A helm chart does exist for [GLAuth](https://github.com/glauth/helm-glauth), but it does not suit our needs. We are configuring this application to use statically defined users and will therefore need a deployment, a service and a secret for its configuration.
 
-_Note_ - that the communication between Dex and GLAuth is LDAP, but should be LDAP over SSL in a production cluster.
+_Note_ - the communication between Dex and GLAuth is LDAP, but should be LDAP over SSL in a production cluster.
 
 #### Service
 
@@ -42,7 +42,9 @@ The configuration consists of two parts, one for defining the statically defined
 
 #### Users and Groups
 
-You can configure users and groups where a user can be a member of multiple groups, but this does come with some weirdness.
+You can configure users and groups where a user can be a member of multiple groups, but this can feel a little quirky.
+
+You can only assign a single group to a user, however you can configure groups to include members of another group.
 
 The following example for Alice makes her a member of both the admin group and the editor group.
 
@@ -56,8 +58,6 @@ Line 12
 
 Line 17
 : The editor group is assigned to everyone in the number 5003 group
-
-_Note_ - you can only assign a _single_ group to a user.
 
 #### Connections and queries
 
@@ -113,7 +113,7 @@ Each client has:
 The group membership defined for the users in GLAuth can be queried by Dex using the `groupSearch`.
 Any group memberships will result in tokens issued having a `groups` claim with the names of each group.
 
-_Note_ - the `group` claim is only include if the OIDC login flow is started with `groups` as one of the requested scopes.
+_Note_ - the `group` claim is only included if the OIDC login flow is started with `groups` as one of the requested scopes.
 
 ## Explaining the use case
 
@@ -156,8 +156,8 @@ The main components needed for this proof of concept are:
 - [Ingress nginx controller](https://kubernetes.github.io/ingress-nginx/) as a router of http traffic
 - [Dex](https://dexidp.io) as a federated OIDC provider
 - [GLAuth](https://glauth.github.io) as an authentication backend
-- [Grafana](https://grafana.com/grafana/) as a OIDC-capable web applications
-- [Argo CD](https://argoproj.github.io/cd/) as a OIDC-capable web applications
+- [Grafana](https://grafana.com/grafana/) as an OIDC-capable web applications
+- [Argo CD](https://argoproj.github.io/cd/) as an OIDC-capable web applications
 
 This proof of concept is based on an earlier post about [debugging OIDC logins](https://codereaper.com/blog/2024/debugging-argo-cd-and-oidc-logins/).
 
@@ -168,25 +168,25 @@ The first two components on the list are Kind and the ingress controller. They a
 Kind is a simple way to have a local cluster for testing purposes which means you can likely test this your self on your own machine.
 Kind brings along the actual kubernetes applications like api server, scheduler, dns server etc.
 
-The ingress controller is a piece of required software for a kubernetes cluster to route network traffic behind the outside of the cluster to the inside of the cluster.
+An ingress controller is required software for a kubernetes cluster to route network traffic behind the outside of the cluster to the inside of the cluster.
 
-These two component enables the cluster to host HTTP applications - _and technically more, but again, this is irrelevant for our set up_.
+These two components enable the cluster to host HTTP applications - _and technically more, but again, this is irrelevant for our set up_.
 
 ### Network
 
 We are taking certain shortcuts in regards to the network setup like securing it with HTTPS/SSL for a few reasons:
 
 - it is irrelevant for demonstrating the OIDC provider
-- it is provided by default by large kubernetes providers, like AKS, GKE, etc.
+- large kubernetes providers, like AKS, GKE, etc. have provider specific guides available
 - there are lots of tutorials and guides for securing clusters with [cert-manager](https://cert-manager.io)
 
-Our set up will work regardless of whether you have SSL termination at the ingress controller or at each application - _even though this local set up will use HTTP_.
+Our set up will work regardless of whether you have SSL termination at the ingress controller or at each application - _even though this local setup will use HTTP_.
 
 Notably we are also skipping setting up SSL connections between applications in the network on the inside of the cluster.
 
 ### Application Network
 
-The applications will have three web applications accessible through the ingress controller
+The cluster will expose three web applications accessible through the ingress controller
 and one application only accessible from the inside of the cluster and only used directly by Dex.
 
 ```goat
@@ -207,7 +207,7 @@ and one application only accessible from the inside of the cluster and only used
     .--------------------------------------.
 ```
 
-We could assign a port number to each web application serve them them as `http://127.0.0.1:8080`, etc., but [nip.io](https://nip.io) is a better option and allows us to use these addresses instead:
+We could assign a port number to each web application serve them as `http://127.0.0.1:8080`, etc., but [nip.io](https://nip.io) is a better option and allows us to use these addresses instead:
 
 - `http://dex.127.0.0.1.nip.io`
 - `http://argocd.127.0.0.1.nip.io`
@@ -215,7 +215,7 @@ We could assign a port number to each web application serve them them as `http:/
 
 _Note there would be issues with OIDC redirection and/or cookies, if we try to use the one application per port approach_.
 
-Basically nip.io address always resolves to the ip address in its name:
+Basically a nip.io address always resolves to the ip address in its name:
 
 | Prefix            | Dot | Address     | Dot | Suffix   |
 | ----------------- | --- | ----------- | --- | -------- |
@@ -225,11 +225,11 @@ This means everything is served by the localhost which will work fine for your b
 
 ### Cluster DNS
 
-The web applications are inside the cluster running on individual [pods](https://kubernetes.io/docs/concepts/workloads/pods/) - _or group of containers_ - which mean they each have an IP and therefore `127.0.0.1` and localhost will be their own loopback interface.
+The web applications are inside the cluster running on individual [pods](https://kubernetes.io/docs/concepts/workloads/pods/) - _or group of containers_ - which means they each have an IP and therefore `127.0.0.1` and localhost will be their own loopback interface.
 
 This means that if the Dex pod made a request to `http://argocd.127.0.0.1.nip.io`, then Dex would connect to itself.
 
-For a browser making HTTP request to the cluster this is not an issue, but part of the OIDC login flow requires the OIDC-capable application to make requests directly the OIDC provider.
+For a browser making HTTP request to the cluster this is not an issue, but part of the OIDC login flow requires the OIDC-capable application to make requests directly to the OIDC provider.
 
 To solve this issue we are going to make CoreDNS - _the DNS server that came with Kind_ - rewrite the DNS lookup for Dex to the service that points to Dex.
 
