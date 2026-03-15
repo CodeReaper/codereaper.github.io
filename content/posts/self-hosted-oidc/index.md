@@ -13,7 +13,7 @@ After going through the general setup we will set up a local [proof of concept](
 
 ## GLAuth
 
-GLAuth is an LDAP server that handles user and group management. We will configure it to function as a authentication backend for Dex.
+GLAuth is an LDAP server that handles user and group management. We will configure it to function as an authentication backend for Dex.
 
 ### Kubernetes manifests
 
@@ -93,7 +93,7 @@ Line 11-17
 : Define user queries that uses `uid` as username
 
 Line 19-25
-: Define group queries that uses `memberUid` to resolve groups
+: Define group queries that use `memberUid` to resolve groups
 
 ### Static Clients
 
@@ -165,9 +165,9 @@ This proof of concept is based on an earlier post about [debugging OIDC logins](
 
 ### The Kubernetes Cluster
 
-The first two components on the list are Kind and the ingress controller. They are both nothing special in this set up.
+The first two components on the list are Kind and the ingress controller. They are both nothing special in this setup.
 
-Kind is a simple way to have a local cluster for testing purposes which means you can likely test this your self on your own machine.
+Kind is a simple way to have a local cluster for testing purposes which means you can likely test this yourself on your own machine.
 Kind brings along the actual kubernetes applications like api server, scheduler, dns server etc.
 
 An ingress controller is required software for a kubernetes cluster to route network traffic behind the outside of the cluster to the inside of the cluster.
@@ -176,13 +176,13 @@ These two components enable the cluster to host HTTP applications - _and technic
 
 ### Network
 
-We are taking certain shortcuts in regards to the network setup like securing it with HTTPS/SSL for a few reasons:
+We are taking certain shortcuts regarding the network setup like securing it with HTTPS/SSL for a few reasons:
 
 - it is irrelevant for demonstrating the OIDC provider
-- large kubernetes providers, like AKS, GKE, etc. have provider specific guides available
+- large Kubernetes providers, like AKS, GKE, etc. have provider specific guides available
 - there are lots of tutorials and guides for securing clusters with [cert-manager](https://cert-manager.io)
 
-Our set up will work regardless of whether you have SSL termination at the ingress controller or at each application - _even though this local setup will use HTTP_.
+Our setup will work regardless of whether you have SSL termination at the ingress controller or at each application - _even though this local setup will use HTTP_.
 
 Notably we are also skipping setting up SSL connections between applications in the network on the inside of the cluster.
 
@@ -199,7 +199,7 @@ and one application only accessible from the inside of the cluster and only used
     |           +-->| Dex |<--->| GLAuth | |
     |          /     '---'       '------'  |
 .---------.   /                            |
-| Ingress .<-+         .-------.           |
+| Gateway .<-+         .-------.           |
 .---------.   \   +-->| Argo CD |          |
     |          \ /     '-------'           |
     |           +                          |
@@ -217,7 +217,7 @@ We could assign a port number to each web application serve them as `http://127.
 
 _Note there would be issues with OIDC redirection and/or cookies, if we try to use the one application per port approach_.
 
-Basically a nip.io address always resolves to the ip address in its name:
+A nip.io address always resolves to the ip address in its name:
 
 | Prefix            | Dot | Address     | Dot | Suffix   |
 | ----------------- | --- | ----------- | --- | -------- |
