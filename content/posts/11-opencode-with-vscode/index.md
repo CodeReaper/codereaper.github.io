@@ -121,7 +121,6 @@ Below is a part of my permission set.
       "curl *": "ask",
       "echo *": "allow",
       "find *": "allow",
-      "find * --delete *": "deny",
       "find * --exec *": "deny",
       // ...
       "which *": "allow",
@@ -160,7 +159,7 @@ We need the following changes:
   {
     "command": "opencode.openTerminal",
     "key": "cmd+k cmd+o",
-    "when": "editorTextFocus"
+    "when": "!terminalFocus"
   }
 ```
 
